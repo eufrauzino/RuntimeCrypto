@@ -21,5 +21,7 @@ dist/
 *.avi
 *.mkv
 
-# Security (opcional, adicione aqui se quiser ignorar chaves no futuro)
-# master.key
+# Security
+master.key
+cofre.bin
+historico.bin
