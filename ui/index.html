@@ -207,7 +207,13 @@
 
 <body>
 
-    <div class="title-bar">RUNTIME CRYPTO</div>
+    <div class="title-bar" style="display: flex; justify-content: space-between; align-items: center; -webkit-app-region: drag;">
+        <span>RUNTIME CRYPTO</span>
+        <div id="tabs-nav" style="display: none; gap: 20px; font-size: 11px; font-weight: 800; letter-spacing: 2px; -webkit-app-region: no-drag;">
+            <span onclick="mudarAba('local')" style="cursor: pointer; color: var(--accent);" id="tab-local">LOCAL</span>
+            <span onclick="mudarAba('nuvem')" style="cursor: pointer; opacity: 0.5;" id="tab-nuvem">NUVEM</span>
+        </div>
+    </div>
 
     <div class="container">
         <!-- View 0: Desbloqueio/Criação de Cofre -->
@@ -251,6 +257,25 @@
             <div class="progress-box" id="progress-box">
                 <div class="spinner"></div>
                 <div class="progress-text" id="progress-text">Protegendo arquivo...</div>
+            </div>
+        </div>
+
+        <!-- View 1.5: Selector NUVEM -->
+        <div class="select-view" id="cloud-view" style="display: none;">
+            <h1>Nuvem Segura</h1>
+            <p id="cloud-status">Carregando drives do RClone...</p>
+            
+            <div id="cloud-remotes" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;">
+                <!-- Lista de remotos do RClone -->
+            </div>
+
+            <div id="cloud-browser" style="display: none;">
+                <div id="cloud-files" style="display: flex; flex-direction: column; gap: 8px; max-height: 350px; overflow-y: auto; text-align: left; padding-right: 10px;">
+                    <!-- Arquivos da nuvem -->
+                </div>
+                <button class="btn-select" onclick="desconectarNuvem()" style="margin-top: 20px; font-size: 0.9rem; padding: 10px 20px; background: rgba(255,255,255,0.05);">
+                    Trocar Drive
+                </button>
             </div>
         </div>
 
@@ -314,7 +339,108 @@
         function mostrarSelector() {
             document.getElementById('lock-view').style.display = 'none';
             document.getElementById('select-view').style.display = 'block';
+            document.getElementById('tabs-nav').style.display = 'flex';
             carregarHistorico();
+        }
+
+        function mudarAba(aba) {
+            if (aba === 'local') {
+                document.getElementById('select-view').style.display = 'block';
+                document.getElementById('cloud-view').style.display = 'none';
+                document.getElementById('tab-local').style.opacity = '1';
+                document.getElementById('tab-local').style.color = 'var(--accent)';
+                document.getElementById('tab-nuvem').style.opacity = '0.5';
+                document.getElementById('tab-nuvem').style.color = 'white';
+            } else {
+                document.getElementById('select-view').style.display = 'none';
+                document.getElementById('cloud-view').style.display = 'block';
+                document.getElementById('tab-nuvem').style.opacity = '1';
+                document.getElementById('tab-nuvem').style.color = 'var(--accent)';
+                document.getElementById('tab-local').style.opacity = '0.5';
+                document.getElementById('tab-local').style.color = 'white';
+                carregarNuvem();
+            }
+        }
+
+        function carregarNuvem() {
+            window.pywebview.api.obter_status_nuvem().then(status => {
+                const statusTxt = document.getElementById('cloud-status');
+                const remotesDiv = document.getElementById('cloud-remotes');
+                
+                if (!status.disponivel) {
+                    statusTxt.innerText = "RClone não encontrado no sistema.";
+                    return;
+                }
+
+                if (status.remotos.length === 0) {
+                    statusTxt.innerText = "Nenhum drive remoto configurado no RClone.";
+                    return;
+                }
+
+                statusTxt.innerText = "Selecione um drive remoto:";
+                remotesDiv.innerHTML = '';
+                status.remotos.forEach(r => {
+                    const btn = document.createElement('div');
+                    btn.style = "background: var(--accent); padding: 15px; border-radius: 12px; cursor: pointer; font-weight: 600; transition: 0.3s;";
+                    btn.innerText = `☁️ ${r}`;
+                    btn.onclick = () => conectarNuvem(r);
+                    remotesDiv.appendChild(btn);
+                });
+            });
+        }
+
+        function conectarNuvem(remoto) {
+            document.getElementById('cloud-remotes').style.display = 'none';
+            document.getElementById('cloud-status').innerText = `Conectando ao drive ${remoto}...`;
+            
+            window.pywebview.api.conectar_nuvem(remoto).then(res => {
+                if (res.success) {
+                    navegarArquivosNuvem(res.url);
+                } else {
+                    alert("Falha na conexão: " + res.error);
+                    desconectarNuvem();
+                }
+            });
+        }
+
+        function navegarArquivosNuvem(url) {
+            document.getElementById('cloud-status').innerText = "Arquivos disponíveis na nuvem:";
+            document.getElementById('cloud-browser').style.display = 'block';
+            const filesDiv = document.getElementById('cloud-files');
+            filesDiv.innerHTML = '<div class="spinner"></div>';
+
+            // Busca a listagem básica do rclone serve http
+            fetch(url).then(r => r.text()).then(html => {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const links = Array.from(doc.querySelectorAll('a'));
+                
+                filesDiv.innerHTML = '';
+                links.forEach(link => {
+                    const nome = link.innerText;
+                    if (nome === '../' || nome.endsWith('/')) return; // Pula pastas por enquanto
+
+                    const item = document.createElement('div');
+                    item.style = "background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px; cursor: pointer; transition: 0.2s; border: 1px solid transparent;";
+                    item.innerText = `📄 ${nome}`;
+                    item.onclick = () => reproduzirVideoNuvem(url + link.getAttribute('href'));
+                    item.onmouseover = () => { item.style.background = "rgba(255,255,255,0.1)"; item.style.borderColor = "var(--glass-border)"; };
+                    item.onmouseout = () => { item.style.background = "rgba(255,255,255,0.05)"; item.style.borderColor = "transparent"; };
+                    filesDiv.appendChild(item);
+                });
+            });
+        }
+
+        function reproduzirVideoNuvem(url) {
+            document.getElementById('cloud-view').style.display = 'none';
+            document.getElementById('tabs-nav').style.display = 'none';
+            reproduzirVideo(url);
+        }
+
+        function desconectarNuvem() {
+            document.getElementById('cloud-browser').style.display = 'none';
+            document.getElementById('cloud-remotes').style.display = 'flex';
+            carregarNuvem();
         }
 
         function carregarHistorico() {
