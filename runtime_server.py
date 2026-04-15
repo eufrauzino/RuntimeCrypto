@@ -1,10 +1,14 @@
 import os
 import uvicorn
 import base64
+import json
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import StreamingResponse
 from core.crypto_worker import GerenciadorCriptografia, TAMANHO_BLOCO
 from contextlib import asynccontextmanager
+
+# O cabeçalho ocupa os primeiros 1024 bytes
+TAMANHO_CABECALHO = 1024
 
 gerenciador = GerenciadorCriptografia()
 
@@ -15,7 +19,7 @@ async def ciclo_vida(app: FastAPI):
 
 app = FastAPI(title="Runtime Crypto Core", lifespan=ciclo_vida)
 
-# A chave será injetada aqui em memória pelo desktop_player no momento do desbloqueio
+# CHAVE_MESTRA injetada em memória
 CHAVE_MESTRA = b""
 
 @app.get("/play/{caminho_base64}")
@@ -32,10 +36,13 @@ async def transmitir_video(caminho_base64: str, requisicao: Request):
     if not os.path.exists(caminho_arquivo):
         raise HTTPException(status_code=404, detail="Arquivo não encontrado.")
         
-    tamanho_arquivo = os.path.getsize(caminho_arquivo)
+    # Tamanho real do vídeo é o tamanho do arquivo menos o cabeçalho
+    tamanho_total_arquivo = os.path.getsize(caminho_arquivo)
+    tamanho_video = tamanho_total_arquivo - TAMANHO_CABECALHO
+    
     cabecalho_range = requisicao.headers.get("Range")
     inicio = 0
-    fim = tamanho_arquivo - 1
+    fim = tamanho_video - 1
     
     if cabecalho_range:
         string_range = cabecalho_range.replace("bytes=", "")
@@ -52,7 +59,8 @@ async def transmitir_video(caminho_base64: str, requisicao: Request):
         
         with open(caminho_arquivo, 'rb') as f:
             for id_bloco in range(idx_bloco_inicio, idx_bloco_fim + 1):
-                f.seek(id_bloco * TAMANHO_BLOCO)
+                # Soma o offset do cabeçalho para pular a parte dos metadados
+                f.seek(TAMANHO_CABECALHO + (id_bloco * TAMANHO_BLOCO))
                 dados_criptografados = f.read(TAMANHO_BLOCO)
                 if not dados_criptografados: break
                     
@@ -70,7 +78,7 @@ async def transmitir_video(caminho_base64: str, requisicao: Request):
                     yield dados_descriptografados
                 
     headers = {
-        "Content-Range": f"bytes {inicio}-{fim}/{tamanho_arquivo}",
+        "Content-Range": f"bytes {inicio}-{fim}/{tamanho_video}",
         "Accept-Ranges": "bytes",
         "Content-Length": str(tamanho_trecho),
         "Content-Type": "video/mp4",
