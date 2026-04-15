@@ -213,12 +213,18 @@
         <!-- View 0: Desbloqueio/Criação de Cofre -->
         <div class="select-view" id="lock-view">
             <h1 id="lock-title">Cofre Protegido</h1>
-            <p id="lock-desc">Insira sua senha mestre para acessar seus vídeos.</p>
+            <p id="lock-desc" style="margin-bottom: 1.5rem;">Insira sua senha mestre para acessar seus vídeos.</p>
             
-            <input type="password" id="master-password" placeholder="Sua senha secreta..." 
-                   style="width: 80%; padding: 12px; border-radius: 8px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.3); color: white; margin-bottom: 20px; font-family: inherit; text-align: center;">
-            <br>
-            <button class="btn-select" id="btn-unlock" onclick="desbloquearCofre()">
+            <div style="position: relative; width: 85%; margin: 0 auto 1.5rem;">
+                <input type="password" id="master-password" placeholder="Sua senha secreta..." 
+                       style="width: 100%; padding: 14px; border-radius: 12px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.4); color: white; font-family: inherit; text-align: center; font-size: 1rem; box-sizing: border-box; outline: none; transition: border-color 0.3s;">
+            </div>
+
+            <div id="error-message" style="color: #ef4444; font-size: 0.9rem; margin-top: -10px; margin-bottom: 15px; display: none; font-weight: 600;">
+                Senha incorreta. Tente novamente.
+            </div>
+
+            <button class="btn-select" id="btn-unlock" onclick="desbloquearCofre()" style="width: 85%;">
                 Desbloquear Acesso
             </button>
         </div>
@@ -263,19 +269,36 @@
         });
 
         function desbloquearCofre() {
-            const senha = document.getElementById('master-password').value;
-            if (!senha) return alert("Insira uma senha!");
+            const senhaInput = document.getElementById('master-password');
+            const errorMsg = document.getElementById('error-message');
+            const senha = senhaInput.value;
+            
+            if (!senha) {
+                senhaInput.style.borderColor = "#ef4444";
+                return;
+            }
+
+            errorMsg.style.display = 'none';
+            senhaInput.style.borderColor = "var(--glass-border)";
 
             window.pywebview.api.verificar_cofre().then(existe => {
                 if (!existe) {
                     window.pywebview.api.inicializar_cofre(senha).then(res => {
                         if (res.success) mostrarSelector();
-                        else alert("Erro ao criar cofre: " + res.error);
+                        else {
+                            errorMsg.innerText = "Falha ao criar cofre: " + res.error;
+                            errorMsg.style.display = 'block';
+                        }
                     });
                 } else {
                     window.pywebview.api.abrir_cofre(senha).then(res => {
                         if (res.success) mostrarSelector();
-                        else alert(res.error);
+                        else {
+                            errorMsg.innerText = res.error;
+                            errorMsg.style.display = 'block';
+                            senhaInput.style.borderColor = "#ef4444";
+                            senhaInput.value = ""; // Limpa a senha errada
+                        }
                     });
                 }
             });
