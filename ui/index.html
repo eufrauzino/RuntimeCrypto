@@ -241,6 +241,13 @@
                 Selecionar Vídeo
             </button>
 
+            <div id="historico-container" style="margin-top: 2rem; border-top: 1px solid var(--glass-border); padding-top: 1.5rem; display: none;">
+                <h3 style="font-size: 1rem; color: #94a3b8; margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 1px;">Vídeos Recentes</h3>
+                <div id="lista-historico" style="display: flex; flex-direction: column; gap: 10px; max-height: 200px; overflow-y: auto; padding-right: 5px;">
+                    <!-- Itens do histórico entram aqui -->
+                </div>
+            </div>
+
             <div class="progress-box" id="progress-box">
                 <div class="spinner"></div>
                 <div class="progress-text" id="progress-text">Protegendo arquivo...</div>
@@ -307,6 +314,46 @@
         function mostrarSelector() {
             document.getElementById('lock-view').style.display = 'none';
             document.getElementById('select-view').style.display = 'block';
+            carregarHistorico();
+        }
+
+        function carregarHistorico() {
+            window.pywebview.api.obter_historico().then(historico => {
+                const container = document.getElementById('historico-container');
+                const lista = document.getElementById('lista-historico');
+                
+                if (historico && historico.length > 0) {
+                    container.style.display = 'block';
+                    lista.innerHTML = '';
+                    historico.forEach(item => {
+                        const btn = document.createElement('div');
+                        btn.style = "background: rgba(255,255,255,0.05); padding: 10px 15px; border-radius: 10px; cursor: pointer; text-align: left; transition: 0.2s; border: 1px solid transparent; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.9rem;";
+                        btn.innerHTML = `🎥 ${item.nome}`;
+                        btn.onmouseover = () => { btn.style.background = "rgba(255,255,255,0.1)"; btn.style.borderColor = "var(--glass-border)"; };
+                        btn.onmouseout = () => { btn.style.background = "rgba(255,255,255,0.05)"; btn.style.borderColor = "transparent"; };
+                        btn.onclick = () => reproduzirHistorico(item.caminho);
+                        lista.appendChild(btn);
+                    });
+                } else {
+                    container.style.display = 'none';
+                }
+            });
+        }
+
+        function reproduzirHistorico(caminho) {
+            document.querySelector('.btn-select').style.display = 'none';
+            document.getElementById('historico-container').style.display = 'none';
+            document.getElementById('progress-box').style.display = 'block';
+            document.getElementById('progress-text').innerText = 'Acessando vídeo seguro...';
+
+            window.pywebview.api.preparar_reproducao(caminho).then(response => {
+                if (response.success) {
+                    reproduzirVideo(response.url);
+                } else {
+                    alert("Erro ao abrir vídeo: " + response.error);
+                    voltar();
+                }
+            });
         }
 
         function selecionarVideo() {

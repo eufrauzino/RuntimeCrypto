@@ -10,7 +10,6 @@ import secrets
 from encrypt_tool import criptografar_arquivo, gerar_chave_quantica
 from core.crypto_worker import GerenciadorCriptografia, proteger_chave, desproteger_chave
 
-# Importamos o servidor para compartilhar o Gerenciador de Criptografia
 import runtime_server
 
 class ApiPlayer:
@@ -31,7 +30,6 @@ class ApiPlayer:
             with open("cofre.bin", "wb") as f:
                 f.write(dados_protegidos)
             self.chave_mestra = chave_bruta
-            # Injeta no servidor global
             runtime_server.CHAVE_MESTRA = self.chave_mestra
             return {"success": True}
         except Exception as e:
@@ -46,11 +44,43 @@ class ApiPlayer:
             if len(self.chave_mestra) != 32:
                 raise ValueError("Senha incorreta.")
             
-            # Configura a chave no servidor global (em memória)
             runtime_server.CHAVE_MESTRA = self.chave_mestra
             return {"success": True}
         except Exception as e:
             return {"success": False, "error": "Senha inválida."}
+
+    def _carregar_historico(self):
+        """Carrega o histórico criptografado do disco."""
+        if not os.path.exists("historico.bin"):
+            return []
+        try:
+            with open("historico.bin", "rb") as f:
+                dados_cripto = f.read()
+            # O histórico usa o id_bloco -2 para diferenciação técnica
+            dados_brutos = runtime_server.gerenciador.processar_bloco_sincrono(self.chave_mestra, -2, dados_cripto)
+            return json.loads(dados_brutos.decode('utf-8').strip('\0'))
+        except:
+            return []
+
+    def _salvar_historico(self, lista_historico):
+        """Salva o histórico criptografado no disco."""
+        try:
+            dados_json = json.dumps(lista_historico[:10]).encode('utf-8') # Mantém apenas os 10 últimos
+            # Padding para manter um tamanho fixo e dificultar análise de tráfego/tamanho
+            dados_padding = dados_json.ljust(4096, b'\0')
+            dados_cripto = runtime_server.gerenciador.processar_bloco_sincrono(self.chave_mestra, -2, dados_padding)
+            with open("historico.bin", "wb") as f:
+                f.write(dados_cripto)
+        except:
+            pass
+
+    def obter_historico(self):
+        """Exclui caminhos que não existem mais e retorna a lista para a UI."""
+        historico = self._carregar_historico()
+        validados = [item for item in historico if os.path.exists(item['caminho'])]
+        if len(validados) != len(historico):
+            self._salvar_historico(validados)
+        return validados
 
     def selecionar_e_processar_video(self):
         if not self.chave_mestra:
@@ -62,29 +92,34 @@ class ApiPlayer:
         if not resultado:
             return {"success": False, "error": "Cancelado"}
             
-        arquivo_alvo = resultado[0]
-        
+        return self.preparar_reproducao(resultado[0])
+
+    def preparar_reproducao(self, arquivo_alvo):
+        """Lógica comum para abrir vídeo novo ou do histórico."""
         try:
-            nome_arquivo_qnt = arquivo_alvo + ".qnt"
+            nome_arquivo_qnt = arquivo_alvo if arquivo_alvo.endswith(".qnt") else arquivo_alvo + ".qnt"
             
-            # Usando o pool compartilhado do servidor para criptografia
             if not os.path.exists(nome_arquivo_qnt):
                 self.janela.evaluate_js(f"atualizarProgresso('Protegendo arquivo... (Aguarde)')")
                 criptografar_arquivo(arquivo_alvo, self.chave_mestra, runtime_server.gerenciador)
             
-            # Lendo metadados (OPCIONAL: Podemos passar o nome real para a UI)
             with open(nome_arquivo_qnt, 'rb') as f:
                 header_cripto = f.read(1024)
-                # Descriptografando header (id_bloco -1)
                 header_bruto = runtime_server.gerenciador.processar_bloco_sincrono(self.chave_mestra, -1, header_cripto)
                 metadados = json.loads(header_bruto.decode('utf-8').strip('\0'))
                 nome_real = metadados.get("nome", "Video Desconhecido")
             
+            # Atualiza Histórico
+            historico = self._carregar_historico()
+            # Remove duplicata se já existir
+            historico = [h for h in historico if h['caminho'] != nome_arquivo_qnt]
+            historico.insert(0, {"nome": nome_real, "caminho": nome_arquivo_qnt})
+            self._salvar_historico(historico)
+
             caminho_abs = os.path.abspath(nome_arquivo_qnt)
             caminho_b64 = base64.b64encode(caminho_abs.encode('utf-8')).decode('utf-8')
             
             return {"success": True, "url": f"http://127.0.0.1:8080/play/{caminho_b64}", "nome": nome_real}
-            
         except Exception as e:
             return {"success": False, "error": str(e)}
 
