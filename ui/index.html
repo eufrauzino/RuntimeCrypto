@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quantum Runtime Player</title>
+    <!-- Use Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --accent: #3b82f6;
+            --accent-hover: #2563eb;
+            --text-light: #f8fafc;
+            --glass-bg: rgba(30, 41, 59, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Outfit', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-light);
+            background-image:
+                radial-gradient(circle at 15% 50%, rgba(59, 130, 246, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 85% 30%, rgba(147, 51, 234, 0.15) 0%, transparent 50%);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Top Title Bar Drag Region (For frameless windows, optionally) */
+        .title-bar {
+            height: 40px;
+            -webkit-app-region: drag;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            font-weight: 600;
+            font-size: 14px;
+            letter-spacing: 1px;
+            opacity: 0.8;
+        }
+
+        .container {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+            position: relative;
+        }
+
+        /* ------------------ VIEW: SELECT FILE ------------------ */
+        .select-view {
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 3rem;
+            text-align: center;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            transition: all 0.4s ease;
+        }
+
+        h1 {
+            margin-top: 0;
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #60a5fa, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 1rem;
+        }
+
+        p {
+            color: #94a3b8;
+            font-size: 1.1rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .btn-select {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 1rem 2.5rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 9999px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4);
+            font-family: 'Outfit', sans-serif;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-select:hover {
+            background: var(--accent-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.6);
+        }
+
+        .btn-select:active {
+            transform: translateY(0);
+        }
+
+        .progress-box {
+            display: none;
+            margin-top: 2rem;
+            text-align: center;
+        }
+
+        .progress-text {
+            color: #60a5fa;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-left-color: #60a5fa;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* ------------------ VIEW: PLAYER ------------------ */
+        .player-view {
+            display: none;
+            /* hidden initially */
+            width: 100%;
+            height: 100%;
+            flex-direction: column;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        .video-container {
+            width: 100%;
+            flex: 1;
+            background: #000;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+            position: relative;
+        }
+
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            outline: none;
+        }
+
+        .back-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            z-index: 10;
+            font-family: inherit;
+            backdrop-filter: blur(4px);
+            transition: all 0.2s;
+        }
+
+        .back-btn:hover {
+            background: rgba(0, 0, 0, 0.8);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="title-bar">RUNTIME CRYPTO</div>
+
+    <div class="container">
+        <!-- View 0: Desbloqueio/Criação de Cofre -->
+        <div class="select-view" id="lock-view">
+            <h1 id="lock-title">Cofre Protegido</h1>
+            <p id="lock-desc">Insira sua senha mestre para acessar seus vídeos.</p>
+            
+            <input type="password" id="master-password" placeholder="Sua senha secreta..." 
+                   style="width: 80%; padding: 12px; border-radius: 8px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.3); color: white; margin-bottom: 20px; font-family: inherit; text-align: center;">
+            <br>
+            <button class="btn-select" id="btn-unlock" onclick="desbloquearCofre()">
+                Desbloquear Acesso
+            </button>
+        </div>
+
+        <!-- View 1: Selector -->
+        <div class="select-view" id="select-view" style="display: none;">
+            <h1>Cofre Quântico</h1>
+            <p>Selecione um vídeo. Ele será protegido e reproduzido em tempo real sem rastros descritografados.</p>
+
+            <button class="btn-select" onclick="selecionarVideo()">
+                <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4m14-7l-5-5m0 0l-5 5m5-5v12"></path>
+                </svg>
+                Selecionar Vídeo
+            </button>
+
+            <div class="progress-box" id="progress-box">
+                <div class="spinner"></div>
+                <div class="progress-text" id="progress-text">Protegendo arquivo...</div>
+            </div>
+        </div>
+
+        <!-- View 2: Player -->
+        <div class="player-view" id="player-view">
+            <div class="video-container">
+                <button class="back-btn" onclick="voltar()">Ver Outro</button>
+                <video id="main-player" controls autoplay controlslist="nodownload"></video>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Ao carregar, verifica se o cofre existe
+        window.addEventListener('pywebviewready', function() {
+            window.pywebview.api.verificar_cofre().then(existe => {
+                if (!existe) {
+                    document.getElementById('lock-title').innerText = "Criar Novo Cofre";
+                    document.getElementById('lock-desc').innerText = "Defina uma senha mestre para seu cofre.";
+                    document.getElementById('btn-unlock').innerText = "Criar e Desbloquear";
+                }
+            });
+        });
+
+        function desbloquearCofre() {
+            const senha = document.getElementById('master-password').value;
+            if (!senha) return alert("Insira uma senha!");
+
+            window.pywebview.api.verificar_cofre().then(existe => {
+                if (!existe) {
+                    window.pywebview.api.inicializar_cofre(senha).then(res => {
+                        if (res.success) mostrarSelector();
+                        else alert("Erro ao criar cofre: " + res.error);
+                    });
+                } else {
+                    window.pywebview.api.abrir_cofre(senha).then(res => {
+                        if (res.success) mostrarSelector();
+                        else alert(res.error);
+                    });
+                }
+            });
+        }
+
+        function mostrarSelector() {
+            document.getElementById('lock-view').style.display = 'none';
+            document.getElementById('select-view').style.display = 'block';
+        }
+
+        function selecionarVideo() {
+            if (window.pywebview && window.pywebview.api) {
+                // Previne múltiplos cliques
+                document.querySelector('.btn-select').style.display = 'none';
+                document.getElementById('progress-box').style.display = 'block';
+                document.getElementById('progress-text').innerText = 'Aguardando seleção...';
+
+                window.pywebview.api.selecionar_e_processar_video().then(response => {
+                    if (response.success) {
+                        document.getElementById('progress-text').innerText = 'Reproduzindo...';
+                        reproduzirVideo(response.url);
+                    } else {
+                        // Reseta a UI em caso de cancelamento ou erro
+                        document.querySelector('.btn-select').style.display = 'inline-flex';
+                        document.getElementById('progress-box').style.display = 'none';
+                        if (response.error && response.error !== "Cancelado") {
+                            alert("Erro: " + response.error);
+                        }
+                    }
+                });
+            } else {
+                alert("API PyWebView não encontrada!");
+            }
+        }
+
+        // Pode ser chamado pelo Python usando window.evaluate_js
+        function atualizarProgresso(msg) {
+            document.getElementById('progress-text').innerText = msg;
+        }
+
+        function reproduzirVideo(url) {
+            document.getElementById('select-view').style.display = 'none';
+            document.getElementById('player-view').style.display = 'flex';
+
+            const player = document.getElementById('main-player');
+            player.src = url;
+            player.play();
+        }
+
+        function voltar() {
+            const player = document.getElementById('main-player');
+            player.pause();
+            player.removeAttribute('src'); // limpa stream
+            player.load();
+
+            document.getElementById('player-view').style.display = 'none';
+            document.getElementById('select-view').style.display = 'block';
+            document.querySelector('.btn-select').style.display = 'inline-flex';
+            document.getElementById('progress-box').style.display = 'none';
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+env/
+venv/
+ENV/
+build/
+dist/
+
+# IDEs
+.vscode/
+.idea/
+
+# Large files / Binary assets
+*.mp4
+*.qnt
+*.qt
+*.mov
+*.avi
+*.mkv
+
+# Security (opcional, adicione aqui se quiser ignorar chaves no futuro)
+# master.key
