@@ -207,9 +207,11 @@
 
 <body>
 
-    <div class="title-bar" style="display: flex; justify-content: space-between; align-items: center; -webkit-app-region: drag;">
+    <div class="title-bar"
+        style="display: flex; justify-content: space-between; align-items: center; -webkit-app-region: drag;">
         <span>RUNTIME CRYPTO</span>
-        <div id="tabs-nav" style="display: none; gap: 20px; font-size: 11px; font-weight: 800; letter-spacing: 2px; -webkit-app-region: no-drag;">
+        <div id="tabs-nav"
+            style="display: none; gap: 20px; font-size: 11px; font-weight: 800; letter-spacing: 2px; -webkit-app-region: no-drag;">
             <span onclick="mudarAba('local')" style="cursor: pointer; color: var(--accent);" id="tab-local">LOCAL</span>
             <span onclick="mudarAba('nuvem')" style="cursor: pointer; opacity: 0.5;" id="tab-nuvem">NUVEM</span>
         </div>
@@ -220,13 +222,14 @@
         <div class="select-view" id="lock-view">
             <h1 id="lock-title">Cofre Protegido</h1>
             <p id="lock-desc" style="margin-bottom: 1.5rem;">Insira sua senha mestre para acessar seus vídeos.</p>
-            
+
             <div style="position: relative; width: 85%; margin: 0 auto 1.5rem;">
-                <input type="password" id="master-password" placeholder="Sua senha secreta..." 
-                       style="width: 100%; padding: 14px; border-radius: 12px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.4); color: white; font-family: inherit; text-align: center; font-size: 1rem; box-sizing: border-box; outline: none; transition: border-color 0.3s;">
+                <input type="password" id="master-password" placeholder="Sua senha secreta..."
+                    style="width: 100%; padding: 14px; border-radius: 12px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.4); color: white; font-family: inherit; text-align: center; font-size: 1rem; box-sizing: border-box; outline: none; transition: border-color 0.3s;">
             </div>
 
-            <div id="error-message" style="color: #ef4444; font-size: 0.9rem; margin-top: -10px; margin-bottom: 15px; display: none; font-weight: 600;">
+            <div id="error-message"
+                style="color: #ef4444; font-size: 0.9rem; margin-top: -10px; margin-bottom: 15px; display: none; font-weight: 600;">
                 Senha incorreta. Tente novamente.
             </div>
 
@@ -247,9 +250,13 @@
                 Selecionar Vídeo Local
             </button>
 
-            <div id="historico-container" style="margin-top: 2rem; border-top: 1px solid var(--glass-border); padding-top: 1.5rem; display: none;">
-                <h3 style="font-size: 1rem; color: #94a3b8; margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 1px;">Vídeos Recentes</h3>
-                <div id="lista-historico" style="display: flex; flex-direction: column; gap: 10px; max-height: 200px; overflow-y: auto; padding-right: 5px;">
+            <div id="historico-container"
+                style="margin-top: 2rem; border-top: 1px solid var(--glass-border); padding-top: 1.5rem; display: none;">
+                <h3
+                    style="font-size: 1rem; color: #94a3b8; margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 1px;">
+                    Vídeos Recentes</h3>
+                <div id="lista-historico"
+                    style="display: flex; flex-direction: column; gap: 10px; max-height: 200px; overflow-y: auto; padding-right: 5px;">
                     <!-- Itens do histórico entram aqui -->
                 </div>
             </div>
@@ -258,13 +265,16 @@
         <!-- View 1.2: Local Browser -->
         <div class="select-view" id="local-browser-view" style="display: none;">
             <h1>Arquivos Locais</h1>
-            <p id="local-path" style="font-family: monospace; font-size: 0.9rem; word-break: break-all; opacity: 0.7;">/</p>
-            
-            <div id="local-files" style="display: flex; flex-direction: column; gap: 8px; max-height: 350px; overflow-y: auto; text-align: left; padding-right: 10px;">
+            <p id="local-path" style="font-family: monospace; font-size: 0.9rem; word-break: break-all; opacity: 0.7;">/
+            </p>
+
+            <div id="local-files"
+                style="display: flex; flex-direction: column; gap: 8px; max-height: 350px; overflow-y: auto; text-align: left; padding-right: 10px;">
                 <!-- Arquivos da máquina renderizados via API -->
             </div>
-            
-            <button class="btn-select" onclick="mostrarSelector()" style="margin-top: 20px; font-size: 0.9rem; padding: 10px 20px; background: rgba(255,255,255,0.05);">
+
+            <button class="btn-select" onclick="mostrarSelector()"
+                style="margin-top: 20px; font-size: 0.9rem; padding: 10px 20px; background: rgba(255,255,255,0.05);">
                 Voltar
             </button>
         </div>
@@ -273,18 +283,29 @@
         <div class="select-view" id="cloud-view" style="display: none;">
             <h1>Nuvem Segura</h1>
             <p id="cloud-status">Carregando drives do RClone...</p>
-            
+
             <div id="cloud-remotes" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;">
                 <!-- Lista de remotos do RClone -->
             </div>
 
             <div id="cloud-browser" style="display: none;">
-                <div id="cloud-files" style="display: flex; flex-direction: column; gap: 8px; max-height: 350px; overflow-y: auto; text-align: left; padding-right: 10px;">
+                <div id="cloud-nav-path"
+                    style="margin-bottom: 15px; font-size: 0.9rem; color: #94a3b8; text-align: left; word-break: break-all;">
+                </div>
+                <div id="cloud-files"
+                    style="display: flex; flex-direction: column; gap: 8px; max-height: 350px; overflow-y: auto; text-align: left; padding-right: 10px;">
                     <!-- Arquivos da nuvem -->
                 </div>
-                <button class="btn-select" onclick="desconectarNuvem()" style="margin-top: 20px; font-size: 0.9rem; padding: 10px 20px; background: rgba(255,255,255,0.05);">
-                    Trocar Drive
-                </button>
+                <div style="display: flex; justify-content: center; gap: 15px; margin-top: 20px;">
+                    <button class="btn-select" onclick="voltarPastaNuvem()" id="btn-back-folder"
+                        style="display: none; font-size: 0.9rem; padding: 10px 20px; background: rgba(59, 130, 246, 0.2);">
+                        ⬅️ Voltar Pasta
+                    </button>
+                    <button class="btn-select" onclick="desconectarNuvem()"
+                        style="font-size: 0.9rem; padding: 10px 20px; background: rgba(255,255,255,0.05);">
+                        Trocar Drive
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -315,7 +336,7 @@
             }
         }
 
-        window.addEventListener('DOMContentLoaded', async function() {
+        window.addEventListener('DOMContentLoaded', async function () {
             const status = await fetchAPI('/api/cofre/status');
             if (status && !status.existe) {
                 document.getElementById('lock-title').innerText = "Criar Novo Cofre";
@@ -328,7 +349,7 @@
             const senhaInput = document.getElementById('master-password');
             const errorMsg = document.getElementById('error-message');
             const senha = senhaInput.value;
-            
+
             if (!senha) {
                 senhaInput.style.borderColor = "#ef4444";
                 return;
@@ -390,7 +411,7 @@
             const status = await fetchAPI('/api/nuvem/status');
             const statusTxt = document.getElementById('cloud-status');
             const remotesDiv = document.getElementById('cloud-remotes');
-            
+
             if (!status || !status.disponivel) {
                 statusTxt.innerText = "RClone não encontrado no sistema.";
                 return;
@@ -412,53 +433,86 @@
             });
         }
 
+        let baseCloudUrl = "";
+        let currentCloudPath = "";
+
         async function conectarNuvem(remoto) {
             document.getElementById('cloud-remotes').style.display = 'none';
             document.getElementById('cloud-status').innerText = `Conectando ao drive ${remoto}...`;
-            
-            const res = await fetchAPI('/api/nuvem/conectar', 'POST', { remoto });
-            if (res.success) {
-                navegarArquivosNuvem(res.url);
-            } else {
-                alert("Falha na conexão: " + res.error);
-                desconectarNuvem();
-            }
+
+            window.pywebview.api.conectar_nuvem(remoto).then(res => {
+                if (res.success) {
+                    navegarArquivosNuvem(res.url);
+                } else {
+                    alert("Falha na conexão: " + res.error);
+                    desconectarNuvem();
+                }
+            });
         }
 
-        function navegarArquivosNuvem(url) {
+        function navegarArquivosNuvem(caminhoRelativo) {
+            currentCloudPath = caminhoRelativo;
+            if (!currentCloudPath.startsWith('/')) currentCloudPath = '/' + currentCloudPath;
+
             document.getElementById('cloud-status').innerText = "Arquivos disponíveis na nuvem:";
             document.getElementById('cloud-browser').style.display = 'block';
+            document.getElementById('cloud-nav-path').innerText = "Caminho: " + currentCloudPath;
+
+            const btnBack = document.getElementById('btn-back-folder');
+            if (currentCloudPath === '/' || currentCloudPath === '') {
+                btnBack.style.display = 'none';
+            } else {
+                btnBack.style.display = 'inline-flex';
+            }
+
             const filesDiv = document.getElementById('cloud-files');
             filesDiv.innerHTML = '<div class="spinner"></div>';
 
+            // Busca a listagem básica do rclone serve http
             fetch(url).then(r => r.text()).then(html => {
                 const parser = new DOMParser();
                 const doc = parser.parseFromString(html, 'text/html');
                 const links = Array.from(doc.querySelectorAll('a'));
-                
+
                 filesDiv.innerHTML = '';
                 links.forEach(link => {
                     const nome = link.innerText;
-                    if (nome === '../' || nome.endsWith('/')) return;
+                    if (nome === '../' || nome.endsWith('/')) return; // Pula pastas por enquanto
 
+                    const isFolder = nome.endsWith('/');
                     const item = document.createElement('div');
                     item.style = "background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px; cursor: pointer; transition: 0.2s; border: 1px solid transparent;";
                     item.innerText = `📄 ${nome}`;
-                    
-                    const fullUrl = url + link.getAttribute('href');
-                    item.onclick = () => reproduzirVideoNuvem(fullUrl);
-                    
+                    item.onclick = () => reproduzirVideoNuvem(url + link.getAttribute('href'));
                     item.onmouseover = () => { item.style.background = "rgba(255,255,255,0.1)"; item.style.borderColor = "var(--glass-border)"; };
                     item.onmouseout = () => { item.style.background = "rgba(255,255,255,0.05)"; item.style.borderColor = "transparent"; };
                     filesDiv.appendChild(item);
                 });
+
+                if (filesDiv.innerHTML === '') {
+                    filesDiv.innerHTML = '<div style="color: #94a3b8; text-align: center; margin-top: 10px;">Pasta vazia</div>';
+                }
+            }).catch(e => {
+                filesDiv.innerHTML = `<div style="color: #ef4444; text-align: center;">Erro ao carregar diretório.</div>`;
             });
+        }
+
+        function voltarPastaNuvem() {
+            if (currentCloudPath === '/' || currentCloudPath === '') return;
+
+            let parts = currentCloudPath.split('/').filter(p => p !== '');
+            parts.pop(); // Remove a última pasta
+
+            let newPath = '/' + parts.join('/');
+            if (newPath !== '/') newPath += '/';
+
+            navegarArquivosNuvem(newPath);
         }
 
         function reproduzirVideoNuvem(url) {
             document.getElementById('cloud-view').style.display = 'none';
             document.getElementById('tabs-nav').style.display = 'none';
-            
+
             // Agora redirecionamos o URL para a nossa API interceptar!
             carregarVideoLocal(url);
         }
@@ -474,7 +528,7 @@
             const historico = await fetchAPI('/api/historico');
             const container = document.getElementById('historico-container');
             const lista = document.getElementById('lista-historico');
-            
+
             if (historico && !historico.error && historico.length > 0) {
                 container.style.display = 'block';
                 lista.innerHTML = '';
@@ -495,7 +549,7 @@
         async function carregarVideoLocal(caminho) {
             document.getElementById('select-view').style.display = 'none';
             document.getElementById('local-browser-view').style.display = 'none';
-            
+
             document.getElementById('loading-view').style.display = 'block';
             document.getElementById('loading-text').innerText = 'Acessando e protegendo arquivo...';
 
@@ -518,7 +572,7 @@
         async function navegarPastaLocal(caminho) {
             const filesDiv = document.getElementById('local-files');
             filesDiv.innerHTML = '<div class="spinner"></div>';
-            
+
             const response = await fetchAPI(`/api/browser?path=${encodeURIComponent(caminho)}`);
             if (response.error) {
                 alert("Erro: " + response.error);
@@ -543,7 +597,7 @@
                 btn.innerText = (item.is_dir ? "📁 " : "📄 ") + item.nome;
                 btn.onmouseover = () => { btn.style.background = "rgba(255,255,255,0.1)"; btn.style.borderColor = "var(--glass-border)"; };
                 btn.onmouseout = () => { btn.style.background = "rgba(255,255,255,0.05)"; btn.style.borderColor = "transparent"; };
-                
+
                 if (item.is_dir) {
                     btn.onclick = () => navegarPastaLocal(item.caminho);
                 } else {
@@ -567,7 +621,7 @@
         function voltar() {
             const player = document.getElementById('main-player');
             player.pause();
-            player.removeAttribute('src'); 
+            player.removeAttribute('src');
             player.load();
 
             document.getElementById('player-view').style.display = 'none';
