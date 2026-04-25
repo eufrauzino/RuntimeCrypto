@@ -44,7 +44,9 @@ class GerenciadorRClone:
             self.executavel, "serve", "http", remoto,
             "--addr", f"127.0.0.1:{self.porta_servico}",
             "--read-only",
-            "--vfs-cache-mode", "minimal"
+            "--vfs-cache-mode", "full",
+            "--vfs-read-ahead", "128M",
+            "--vfs-cache-max-size", "5G"
         ]
         
         self.processo_servico = subprocess.Popen(
