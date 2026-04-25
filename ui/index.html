@@ -270,12 +270,18 @@
             </div>
 
             <div id="cloud-browser" style="display: none;">
+                <div id="cloud-nav-path" style="margin-bottom: 15px; font-size: 0.9rem; color: #94a3b8; text-align: left; word-break: break-all;"></div>
                 <div id="cloud-files" style="display: flex; flex-direction: column; gap: 8px; max-height: 350px; overflow-y: auto; text-align: left; padding-right: 10px;">
                     <!-- Arquivos da nuvem -->
                 </div>
-                <button class="btn-select" onclick="desconectarNuvem()" style="margin-top: 20px; font-size: 0.9rem; padding: 10px 20px; background: rgba(255,255,255,0.05);">
-                    Trocar Drive
-                </button>
+                <div style="display: flex; justify-content: center; gap: 15px; margin-top: 20px;">
+                    <button class="btn-select" onclick="voltarPastaNuvem()" id="btn-back-folder" style="display: none; font-size: 0.9rem; padding: 10px 20px; background: rgba(59, 130, 246, 0.2);">
+                        ⬅️ Voltar Pasta
+                    </button>
+                    <button class="btn-select" onclick="desconectarNuvem()" style="font-size: 0.9rem; padding: 10px 20px; background: rgba(255,255,255,0.05);">
+                        Trocar Drive
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -389,13 +395,19 @@
             });
         }
 
+        let baseCloudUrl = "";
+        let currentCloudPath = "";
+
         function conectarNuvem(remoto) {
             document.getElementById('cloud-remotes').style.display = 'none';
             document.getElementById('cloud-status').innerText = `Conectando ao drive ${remoto}...`;
             
             window.pywebview.api.conectar_nuvem(remoto).then(res => {
                 if (res.success) {
-                    navegarArquivosNuvem(res.url);
+                    baseCloudUrl = res.url;
+                    if (baseCloudUrl.endsWith('/')) baseCloudUrl = baseCloudUrl.slice(0, -1);
+                    currentCloudPath = "/";
+                    navegarArquivosNuvem(currentCloudPath);
                 } else {
                     alert("Falha na conexão: " + res.error);
                     desconectarNuvem();
@@ -403,14 +415,27 @@
             });
         }
 
-        function navegarArquivosNuvem(url) {
+        function navegarArquivosNuvem(caminhoRelativo) {
+            currentCloudPath = caminhoRelativo;
+            if (!currentCloudPath.startsWith('/')) currentCloudPath = '/' + currentCloudPath;
+
             document.getElementById('cloud-status').innerText = "Arquivos disponíveis na nuvem:";
             document.getElementById('cloud-browser').style.display = 'block';
+            document.getElementById('cloud-nav-path').innerText = "Caminho: " + currentCloudPath;
+
+            const btnBack = document.getElementById('btn-back-folder');
+            if (currentCloudPath === '/' || currentCloudPath === '') {
+                btnBack.style.display = 'none';
+            } else {
+                btnBack.style.display = 'inline-flex';
+            }
+
             const filesDiv = document.getElementById('cloud-files');
             filesDiv.innerHTML = '<div class="spinner"></div>';
 
-            // Busca a listagem básica do rclone serve http
-            fetch(url).then(r => r.text()).then(html => {
+            const fetchUrl = baseCloudUrl + currentCloudPath;
+
+            fetch(fetchUrl).then(r => r.text()).then(html => {
                 const parser = new DOMParser();
                 const doc = parser.parseFromString(html, 'text/html');
                 const links = Array.from(doc.querySelectorAll('a'));
@@ -418,17 +443,46 @@
                 filesDiv.innerHTML = '';
                 links.forEach(link => {
                     const nome = link.innerText;
-                    if (nome === '../' || nome.endsWith('/')) return; // Pula pastas por enquanto
+                    if (nome === '../') return; // Ignora o link padrão de voltar do RClone, pois temos botão custom
 
+                    const isFolder = nome.endsWith('/');
                     const item = document.createElement('div');
-                    item.style = "background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px; cursor: pointer; transition: 0.2s; border: 1px solid transparent;";
-                    item.innerText = `📄 ${nome}`;
-                    item.onclick = () => reproduzirVideoNuvem(url + link.getAttribute('href'));
+                    item.style = "background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px; cursor: pointer; transition: 0.2s; border: 1px solid transparent; display: flex; align-items: center; gap: 10px;";
+
+                    if (isFolder) {
+                        item.innerHTML = `📁 <b>${nome.replace('/', '')}</b>`;
+                        // RClone serve as href is relative to current path
+                        const newPath = currentCloudPath.endsWith('/') ? currentCloudPath + nome : currentCloudPath + '/' + nome;
+                        item.onclick = () => navegarArquivosNuvem(newPath);
+                    } else {
+                        item.innerHTML = `📄 ${nome}`;
+                        const fileUrl = fetchUrl.endsWith('/') ? fetchUrl + link.getAttribute('href') : fetchUrl + '/' + link.getAttribute('href');
+                        item.onclick = () => reproduzirVideoNuvem(fileUrl);
+                    }
+
                     item.onmouseover = () => { item.style.background = "rgba(255,255,255,0.1)"; item.style.borderColor = "var(--glass-border)"; };
                     item.onmouseout = () => { item.style.background = "rgba(255,255,255,0.05)"; item.style.borderColor = "transparent"; };
                     filesDiv.appendChild(item);
                 });
+
+                if (filesDiv.innerHTML === '') {
+                    filesDiv.innerHTML = '<div style="color: #94a3b8; text-align: center; margin-top: 10px;">Pasta vazia</div>';
+                }
+            }).catch(e => {
+                filesDiv.innerHTML = `<div style="color: #ef4444; text-align: center;">Erro ao carregar diretório.</div>`;
             });
+        }
+
+        function voltarPastaNuvem() {
+            if (currentCloudPath === '/' || currentCloudPath === '') return;
+
+            let parts = currentCloudPath.split('/').filter(p => p !== '');
+            parts.pop(); // Remove a última pasta
+
+            let newPath = '/' + parts.join('/');
+            if (newPath !== '/') newPath += '/';
+
+            navegarArquivosNuvem(newPath);
         }
 
         function reproduzirVideoNuvem(url) {
