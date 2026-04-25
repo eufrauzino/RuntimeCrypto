@@ -47,7 +47,7 @@ def _tarefa_processar_bloco(chave: bytes, id_bloco: int, dados_entrada: bytes) -
     if len(chave) != 32:
         raise ValueError("A chave deve ter exatos 256-bits.")
     
-    nonce = id_bloco.to_bytes(16, byteorder="little")
+    nonce = id_bloco.to_bytes(16, byteorder="little", signed=True)
     cifra = Cipher(algorithms.ChaCha20(chave, nonce), mode=None)
     processador = cifra.decryptor()
     return processador.update(dados_entrada)
