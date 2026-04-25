@@ -47,8 +47,8 @@ async def transmitir_video(caminho_base64: str, requisicao: Request):
     if cabecalho_range:
         string_range = cabecalho_range.replace("bytes=", "")
         partes = string_range.split("-")
-        if len(partes) > 0 and partes[0]: inicio = int(partes[0])
-        if len(partes) > 1 and partes[1]: fim = int(partes[1])
+        if partes[0]: inicio = int(partes[0])
+        if partes[1]: fim = int(partes[1])
             
     tamanho_trecho = (fim - inicio) + 1
     
