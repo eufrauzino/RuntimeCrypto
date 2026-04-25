@@ -15,16 +15,17 @@ O projeto é dividido em três camadas principais:
 *   **Nonce Dinâmico:** O Nonce de cada bloco é derivado matematicamente do seu ID, permitindo o acesso randômico (*seeking*) imediato a qualquer ponto do vídeo sem processar os blocos anteriores.
 *   **Paralelismo:** Utiliza `ProcessPoolExecutor` para distribuir a carga de descriptografia entre os núcleos da CPU, garantindo que o streaming mantenha 60fps em resoluções 4K.
 
-### 2.2. Servidor de Streaming (Backend)
-*   **Tecnologia:** FastAPI + Uvicorn.
-*   **Protocolo:** HTTP Range Requests (Status Code 206).
-*   **Segurança de Memória:** A chave mestra reside apenas na RAM e é injetada no servidor após o desbloqueio do cofre.
-*   **Encapsulamento:** Caminhos de arquivos são transmitidos via Base64 para evitar exposição de estruturas de diretórios nas URLs.
+### 2.2. Servidor de API e Streaming (Backend)
+*   **Tecnologia:** FastAPI + Uvicorn (Python).
+*   **Protocolo de Streaming:** HTTP Range Requests (Status Code 206) permitindo seeking.
+*   **API REST:** Fornece endpoints (`/api/cofre/*`, `/api/nuvem/*`, `/api/browser`) que substituem completamente as chamadas nativas de OS, tornando o sistema Multiplataforma.
+*   **Segurança de Memória:** A chave mestra reside apenas na RAM do servidor em background.
+*   **Hospedagem:** Pode rodar tanto como serviço em background no Desktop quanto hospedado em uma Cloud/VM, isolando os dados brutos da máquina cliente.
 
-### 2.3. Interface do Usuário (Frontend)
-*   **Wrapper:** PyWebView (Componente nativo do sistema operacional).
-*   **Tecnologias:** HTML5, CSS3 (Glassmorphism), JavaScript Vanilla.
-*   **Ponte JS-API:** Comunicação bidirecional entre a interface e o motor Python.
+### 2.3. Interface do Usuário (Frontend - Web-First)
+*   **Paradigma:** Single Page Application puramente em HTML5, CSS3 e JavaScript (API Fetch).
+*   **Explorador Customizado:** Renderiza toda a estrutura de diretórios do "host" (local ou nuvem) virtualmente no DOM (Via API de Navegação), dispensando pop-ups nativas do Windows/SO.
+*   **Wrapper Local:** Para o executável Desktop, usa-se o PyWebView estritamente como um "Navegador Embutido" que visita `localhost:8080`, sem injetar dependências de API. O app tornou-se verdadeiramente cliente<->servidor.
 
 ---
 

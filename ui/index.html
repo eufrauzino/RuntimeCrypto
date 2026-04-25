@@ -240,11 +240,11 @@
             <h1>Cofre Quântico</h1>
             <p>Selecione um vídeo. Ele será protegido e reproduzido em tempo real sem rastros descritografados.</p>
 
-            <button class="btn-select" onclick="selecionarVideo()">
+            <button class="btn-select" onclick="abrirNavegadorLocal()">
                 <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4m14-7l-5-5m0 0l-5 5m5-5v12"></path>
                 </svg>
-                Selecionar Vídeo
+                Selecionar Vídeo Local
             </button>
 
             <div id="historico-container" style="margin-top: 2rem; border-top: 1px solid var(--glass-border); padding-top: 1.5rem; display: none;">
@@ -253,11 +253,20 @@
                     <!-- Itens do histórico entram aqui -->
                 </div>
             </div>
+        </div>
 
-            <div class="progress-box" id="progress-box">
-                <div class="spinner"></div>
-                <div class="progress-text" id="progress-text">Protegendo arquivo...</div>
+        <!-- View 1.2: Local Browser -->
+        <div class="select-view" id="local-browser-view" style="display: none;">
+            <h1>Arquivos Locais</h1>
+            <p id="local-path" style="font-family: monospace; font-size: 0.9rem; word-break: break-all; opacity: 0.7;">/</p>
+            
+            <div id="local-files" style="display: flex; flex-direction: column; gap: 8px; max-height: 350px; overflow-y: auto; text-align: left; padding-right: 10px;">
+                <!-- Arquivos da máquina renderizados via API -->
             </div>
+            
+            <button class="btn-select" onclick="mostrarSelector()" style="margin-top: 20px; font-size: 0.9rem; padding: 10px 20px; background: rgba(255,255,255,0.05);">
+                Voltar
+            </button>
         </div>
 
         <!-- View 1.5: Selector NUVEM -->
@@ -279,6 +288,12 @@
             </div>
         </div>
 
+        <!-- View 1.8: Loading View -->
+        <div class="select-view" id="loading-view" style="display: none;">
+            <div class="spinner"></div>
+            <div class="progress-text" style="display: block; margin-top: 15px;" id="loading-text">Processando...</div>
+        </div>
+
         <!-- View 2: Player -->
         <div class="player-view" id="player-view">
             <div class="video-container">
@@ -289,18 +304,27 @@
     </div>
 
     <script>
-        // Ao carregar, verifica se o cofre existe
-        window.addEventListener('pywebviewready', function() {
-            window.pywebview.api.verificar_cofre().then(existe => {
-                if (!existe) {
-                    document.getElementById('lock-title').innerText = "Criar Novo Cofre";
-                    document.getElementById('lock-desc').innerText = "Defina uma senha mestre para seu cofre.";
-                    document.getElementById('btn-unlock').innerText = "Criar e Desbloquear";
-                }
-            });
+        async function fetchAPI(url, method = 'GET', body = null) {
+            const options = { method, headers: { 'Content-Type': 'application/json' } };
+            if (body) options.body = JSON.stringify(body);
+            try {
+                const res = await fetch(url, options);
+                return await res.json();
+            } catch (e) {
+                return { success: false, error: e.message };
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', async function() {
+            const status = await fetchAPI('/api/cofre/status');
+            if (status && !status.existe) {
+                document.getElementById('lock-title').innerText = "Criar Novo Cofre";
+                document.getElementById('lock-desc').innerText = "Defina uma senha mestre para seu cofre.";
+                document.getElementById('btn-unlock').innerText = "Criar e Desbloquear";
+            }
         });
 
-        function desbloquearCofre() {
+        async function desbloquearCofre() {
             const senhaInput = document.getElementById('master-password');
             const errorMsg = document.getElementById('error-message');
             const senha = senhaInput.value;
@@ -313,39 +337,38 @@
             errorMsg.style.display = 'none';
             senhaInput.style.borderColor = "var(--glass-border)";
 
-            window.pywebview.api.verificar_cofre().then(existe => {
-                if (!existe) {
-                    window.pywebview.api.inicializar_cofre(senha).then(res => {
-                        if (res.success) mostrarSelector();
-                        else {
-                            errorMsg.innerText = "Falha ao criar cofre: " + res.error;
-                            errorMsg.style.display = 'block';
-                        }
-                    });
-                } else {
-                    window.pywebview.api.abrir_cofre(senha).then(res => {
-                        if (res.success) mostrarSelector();
-                        else {
-                            errorMsg.innerText = res.error;
-                            errorMsg.style.display = 'block';
-                            senhaInput.style.borderColor = "#ef4444";
-                            senhaInput.value = ""; // Limpa a senha errada
-                        }
-                    });
+            const status = await fetchAPI('/api/cofre/status');
+            if (!status.existe) {
+                const res = await fetchAPI('/api/cofre/inicializar', 'POST', { senha });
+                if (res.success) mostrarSelector();
+                else {
+                    errorMsg.innerText = "Falha ao criar cofre: " + res.error;
+                    errorMsg.style.display = 'block';
                 }
-            });
+            } else {
+                const res = await fetchAPI('/api/cofre/abrir', 'POST', { senha });
+                if (res.success) mostrarSelector();
+                else {
+                    errorMsg.innerText = res.error;
+                    errorMsg.style.display = 'block';
+                    senhaInput.style.borderColor = "#ef4444";
+                    senhaInput.value = "";
+                }
+            }
         }
 
         function mostrarSelector() {
+            document.getElementById('loading-view').style.display = 'none';
             document.getElementById('lock-view').style.display = 'none';
             document.getElementById('select-view').style.display = 'block';
+            document.getElementById('local-browser-view').style.display = 'none';
             document.getElementById('tabs-nav').style.display = 'flex';
             carregarHistorico();
         }
 
         function mudarAba(aba) {
             if (aba === 'local') {
-                document.getElementById('select-view').style.display = 'block';
+                mostrarSelector();
                 document.getElementById('cloud-view').style.display = 'none';
                 document.getElementById('tab-local').style.opacity = '1';
                 document.getElementById('tab-local').style.color = 'var(--accent)';
@@ -353,6 +376,7 @@
                 document.getElementById('tab-nuvem').style.color = 'white';
             } else {
                 document.getElementById('select-view').style.display = 'none';
+                document.getElementById('local-browser-view').style.display = 'none';
                 document.getElementById('cloud-view').style.display = 'block';
                 document.getElementById('tab-nuvem').style.opacity = '1';
                 document.getElementById('tab-nuvem').style.color = 'var(--accent)';
@@ -362,45 +386,43 @@
             }
         }
 
-        function carregarNuvem() {
-            window.pywebview.api.obter_status_nuvem().then(status => {
-                const statusTxt = document.getElementById('cloud-status');
-                const remotesDiv = document.getElementById('cloud-remotes');
-                
-                if (!status.disponivel) {
-                    statusTxt.innerText = "RClone não encontrado no sistema.";
-                    return;
-                }
+        async function carregarNuvem() {
+            const status = await fetchAPI('/api/nuvem/status');
+            const statusTxt = document.getElementById('cloud-status');
+            const remotesDiv = document.getElementById('cloud-remotes');
+            
+            if (!status || !status.disponivel) {
+                statusTxt.innerText = "RClone não encontrado no sistema.";
+                return;
+            }
 
-                if (status.remotos.length === 0) {
-                    statusTxt.innerText = "Nenhum drive remoto configurado no RClone.";
-                    return;
-                }
+            if (status.remotos.length === 0) {
+                statusTxt.innerText = "Nenhum drive remoto configurado no RClone.";
+                return;
+            }
 
-                statusTxt.innerText = "Selecione um drive remoto:";
-                remotesDiv.innerHTML = '';
-                status.remotos.forEach(r => {
-                    const btn = document.createElement('div');
-                    btn.style = "background: var(--accent); padding: 15px; border-radius: 12px; cursor: pointer; font-weight: 600; transition: 0.3s;";
-                    btn.innerText = `☁️ ${r}`;
-                    btn.onclick = () => conectarNuvem(r);
-                    remotesDiv.appendChild(btn);
-                });
+            statusTxt.innerText = "Selecione um drive remoto:";
+            remotesDiv.innerHTML = '';
+            status.remotos.forEach(r => {
+                const btn = document.createElement('div');
+                btn.style = "background: var(--accent); padding: 15px; border-radius: 12px; cursor: pointer; font-weight: 600; transition: 0.3s;";
+                btn.innerText = `☁️ ${r}`;
+                btn.onclick = () => conectarNuvem(r);
+                remotesDiv.appendChild(btn);
             });
         }
 
-        function conectarNuvem(remoto) {
+        async function conectarNuvem(remoto) {
             document.getElementById('cloud-remotes').style.display = 'none';
             document.getElementById('cloud-status').innerText = `Conectando ao drive ${remoto}...`;
             
-            window.pywebview.api.conectar_nuvem(remoto).then(res => {
-                if (res.success) {
-                    navegarArquivosNuvem(res.url);
-                } else {
-                    alert("Falha na conexão: " + res.error);
-                    desconectarNuvem();
-                }
-            });
+            const res = await fetchAPI('/api/nuvem/conectar', 'POST', { remoto });
+            if (res.success) {
+                navegarArquivosNuvem(res.url);
+            } else {
+                alert("Falha na conexão: " + res.error);
+                desconectarNuvem();
+            }
         }
 
         function navegarArquivosNuvem(url) {
@@ -409,7 +431,6 @@
             const filesDiv = document.getElementById('cloud-files');
             filesDiv.innerHTML = '<div class="spinner"></div>';
 
-            // Busca a listagem básica do rclone serve http
             fetch(url).then(r => r.text()).then(html => {
                 const parser = new DOMParser();
                 const doc = parser.parseFromString(html, 'text/html');
@@ -418,12 +439,15 @@
                 filesDiv.innerHTML = '';
                 links.forEach(link => {
                     const nome = link.innerText;
-                    if (nome === '../' || nome.endsWith('/')) return; // Pula pastas por enquanto
+                    if (nome === '../' || nome.endsWith('/')) return;
 
                     const item = document.createElement('div');
                     item.style = "background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px; cursor: pointer; transition: 0.2s; border: 1px solid transparent;";
                     item.innerText = `📄 ${nome}`;
-                    item.onclick = () => reproduzirVideoNuvem(url + link.getAttribute('href'));
+                    
+                    const fullUrl = url + link.getAttribute('href');
+                    item.onclick = () => reproduzirVideoNuvem(fullUrl);
+                    
                     item.onmouseover = () => { item.style.background = "rgba(255,255,255,0.1)"; item.style.borderColor = "var(--glass-border)"; };
                     item.onmouseout = () => { item.style.background = "rgba(255,255,255,0.05)"; item.style.borderColor = "transparent"; };
                     filesDiv.appendChild(item);
@@ -434,86 +458,105 @@
         function reproduzirVideoNuvem(url) {
             document.getElementById('cloud-view').style.display = 'none';
             document.getElementById('tabs-nav').style.display = 'none';
-            reproduzirVideo(url);
+            
+            // Agora redirecionamos o URL para a nossa API interceptar!
+            carregarVideoLocal(url);
         }
 
-        function desconectarNuvem() {
+        async function desconectarNuvem() {
+            await fetchAPI('/api/nuvem/desconectar', 'POST');
             document.getElementById('cloud-browser').style.display = 'none';
             document.getElementById('cloud-remotes').style.display = 'flex';
             carregarNuvem();
         }
 
-        function carregarHistorico() {
-            window.pywebview.api.obter_historico().then(historico => {
-                const container = document.getElementById('historico-container');
-                const lista = document.getElementById('lista-historico');
-                
-                if (historico && historico.length > 0) {
-                    container.style.display = 'block';
-                    lista.innerHTML = '';
-                    historico.forEach(item => {
-                        const btn = document.createElement('div');
-                        btn.style = "background: rgba(255,255,255,0.05); padding: 10px 15px; border-radius: 10px; cursor: pointer; text-align: left; transition: 0.2s; border: 1px solid transparent; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.9rem;";
-                        btn.innerHTML = `🎥 ${item.nome}`;
-                        btn.onmouseover = () => { btn.style.background = "rgba(255,255,255,0.1)"; btn.style.borderColor = "var(--glass-border)"; };
-                        btn.onmouseout = () => { btn.style.background = "rgba(255,255,255,0.05)"; btn.style.borderColor = "transparent"; };
-                        btn.onclick = () => reproduzirHistorico(item.caminho);
-                        lista.appendChild(btn);
-                    });
-                } else {
-                    container.style.display = 'none';
-                }
-            });
-        }
-
-        function reproduzirHistorico(caminho) {
-            document.querySelector('.btn-select').style.display = 'none';
-            document.getElementById('historico-container').style.display = 'none';
-            document.getElementById('progress-box').style.display = 'block';
-            document.getElementById('progress-text').innerText = 'Acessando vídeo seguro...';
-
-            window.pywebview.api.preparar_reproducao(caminho).then(response => {
-                if (response.success) {
-                    reproduzirVideo(response.url);
-                } else {
-                    alert("Erro ao abrir vídeo: " + response.error);
-                    voltar();
-                }
-            });
-        }
-
-        function selecionarVideo() {
-            if (window.pywebview && window.pywebview.api) {
-                // Previne múltiplos cliques
-                document.querySelector('.btn-select').style.display = 'none';
-                document.getElementById('progress-box').style.display = 'block';
-                document.getElementById('progress-text').innerText = 'Aguardando seleção...';
-
-                window.pywebview.api.selecionar_e_processar_video().then(response => {
-                    if (response.success) {
-                        document.getElementById('progress-text').innerText = 'Reproduzindo...';
-                        reproduzirVideo(response.url);
-                    } else {
-                        // Reseta a UI em caso de cancelamento ou erro
-                        document.querySelector('.btn-select').style.display = 'inline-flex';
-                        document.getElementById('progress-box').style.display = 'none';
-                        if (response.error && response.error !== "Cancelado") {
-                            alert("Erro: " + response.error);
-                        }
-                    }
+        async function carregarHistorico() {
+            const historico = await fetchAPI('/api/historico');
+            const container = document.getElementById('historico-container');
+            const lista = document.getElementById('lista-historico');
+            
+            if (historico && !historico.error && historico.length > 0) {
+                container.style.display = 'block';
+                lista.innerHTML = '';
+                historico.forEach(item => {
+                    const btn = document.createElement('div');
+                    btn.style = "background: rgba(255,255,255,0.05); padding: 10px 15px; border-radius: 10px; cursor: pointer; text-align: left; transition: 0.2s; border: 1px solid transparent; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.9rem;";
+                    btn.innerHTML = `🎥 ${item.nome}`;
+                    btn.onmouseover = () => { btn.style.background = "rgba(255,255,255,0.1)"; btn.style.borderColor = "var(--glass-border)"; };
+                    btn.onmouseout = () => { btn.style.background = "rgba(255,255,255,0.05)"; btn.style.borderColor = "transparent"; };
+                    btn.onclick = () => carregarVideoLocal(item.caminho);
+                    lista.appendChild(btn);
                 });
             } else {
-                alert("API PyWebView não encontrada!");
+                container.style.display = 'none';
             }
         }
 
-        // Pode ser chamado pelo Python usando window.evaluate_js
-        function atualizarProgresso(msg) {
-            document.getElementById('progress-text').innerText = msg;
+        async function carregarVideoLocal(caminho) {
+            document.getElementById('select-view').style.display = 'none';
+            document.getElementById('local-browser-view').style.display = 'none';
+            
+            document.getElementById('loading-view').style.display = 'block';
+            document.getElementById('loading-text').innerText = 'Acessando e protegendo arquivo...';
+
+            const response = await fetchAPI('/api/preparar', 'POST', { caminho });
+            if (response.success) {
+                document.getElementById('loading-view').style.display = 'none';
+                reproduzirVideo(response.url);
+            } else {
+                alert("Erro ao abrir vídeo: " + response.error);
+                voltar();
+            }
+        }
+
+        function abrirNavegadorLocal() {
+            document.getElementById('select-view').style.display = 'none';
+            document.getElementById('local-browser-view').style.display = 'block';
+            navegarPastaLocal("");
+        }
+
+        async function navegarPastaLocal(caminho) {
+            const filesDiv = document.getElementById('local-files');
+            filesDiv.innerHTML = '<div class="spinner"></div>';
+            
+            const response = await fetchAPI(`/api/browser?path=${encodeURIComponent(caminho)}`);
+            if (response.error) {
+                alert("Erro: " + response.error);
+                mostrarSelector();
+                return;
+            }
+
+            document.getElementById('local-path').innerText = response.caminho_atual || "Raiz do Sistema";
+            filesDiv.innerHTML = '';
+
+            if (response.caminho_atual !== "") {
+                const up = document.createElement('div');
+                up.style = "background: rgba(255,255,255,0.1); padding: 10px; border-radius: 8px; cursor: pointer; font-weight: bold; margin-bottom: 5px;";
+                up.innerText = "📁 .. (Subir / Voltar)";
+                up.onclick = () => navegarPastaLocal(response.parent);
+                filesDiv.appendChild(up);
+            }
+
+            response.itens.forEach(item => {
+                const btn = document.createElement('div');
+                btn.style = "background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px; cursor: pointer; transition: 0.2s; border: 1px solid transparent; text-align: left;";
+                btn.innerText = (item.is_dir ? "📁 " : "📄 ") + item.nome;
+                btn.onmouseover = () => { btn.style.background = "rgba(255,255,255,0.1)"; btn.style.borderColor = "var(--glass-border)"; };
+                btn.onmouseout = () => { btn.style.background = "rgba(255,255,255,0.05)"; btn.style.borderColor = "transparent"; };
+                
+                if (item.is_dir) {
+                    btn.onclick = () => navegarPastaLocal(item.caminho);
+                } else {
+                    btn.onclick = () => carregarVideoLocal(item.caminho);
+                }
+                filesDiv.appendChild(btn);
+            });
         }
 
         function reproduzirVideo(url) {
             document.getElementById('select-view').style.display = 'none';
+            document.getElementById('local-browser-view').style.display = 'none';
+            document.getElementById('loading-view').style.display = 'none';
             document.getElementById('player-view').style.display = 'flex';
 
             const player = document.getElementById('main-player');
@@ -524,13 +567,12 @@
         function voltar() {
             const player = document.getElementById('main-player');
             player.pause();
-            player.removeAttribute('src'); // limpa stream
+            player.removeAttribute('src'); 
             player.load();
 
             document.getElementById('player-view').style.display = 'none';
-            document.getElementById('select-view').style.display = 'block';
-            document.querySelector('.btn-select').style.display = 'inline-flex';
-            document.getElementById('progress-box').style.display = 'none';
+            document.getElementById('loading-view').style.display = 'none';
+            mostrarSelector();
         }
     </script>
 </body>
