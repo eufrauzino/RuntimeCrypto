@@ -36,6 +36,17 @@ class RemotoModel(BaseModel):
 class CaminhoModel(BaseModel):
     caminho: str
 
+class CriarRemotoModel(BaseModel):
+    nome: str
+    tipo: str
+    params: dict = {}
+
+class CriarCryptModel(BaseModel):
+    nome: str
+    remoto_base: str
+    senha: str
+    senha2: str = ""
+
 # --- HISTORICO ---
 def _carregar_historico():
     global CHAVE_MESTRA
@@ -202,10 +213,17 @@ def status_nuvem():
         "remotos": nuvem.listar_remotos() if nuvem.esta_disponivel() else []
     }
 
+@app.post("/api/nuvem/instalar")
+async def instalar_nuvem():
+    from fastapi.concurrency import run_in_threadpool
+    sucesso, msg = await run_in_threadpool(nuvem.instalar_rclone_local)
+    return {"success": sucesso, "message": msg}
+
 @app.post("/api/nuvem/conectar")
-def conectar_nuvem(dados: RemotoModel):
+async def conectar_nuvem(dados: RemotoModel):
+    from fastapi.concurrency import run_in_threadpool
     try:
-        url_local = nuvem.iniciar_servidor_http(dados.remoto)
+        url_local = await run_in_threadpool(nuvem.iniciar_servidor_http, dados.remoto)
         return {"success": True, "url": url_local}
     except Exception as e:
         return {"success": False, "error": str(e)}
@@ -214,6 +232,76 @@ def conectar_nuvem(dados: RemotoModel):
 def desconectar_nuvem():
     nuvem.parar_servidor()
     return {"success": True}
+
+@app.get("/api/nuvem/provedores")
+def listar_provedores():
+    from core.rclone_manager import PROVEDORES
+    return PROVEDORES
+
+@app.get("/api/nuvem/auth-url")
+async def iniciar_auth(tipo: str):
+    import asyncio
+    from fastapi.concurrency import run_in_threadpool
+    await run_in_threadpool(nuvem.iniciar_oauth, tipo)
+    # Aguarda até 10s pela URL sem bloquear o event loop
+    for _ in range(20):
+        status = nuvem.obter_status_oauth()
+        if status["url"]:
+            return {"success": True, "url": status["url"]}
+        await asyncio.sleep(0.5)
+    return {"success": True, "url": None}
+
+@app.get("/api/nuvem/auth-status")
+def status_auth():
+    return nuvem.obter_status_oauth()
+
+@app.post("/api/nuvem/auth-abort")
+def abortar_auth():
+    nuvem.abortar_oauth()
+    return {"success": True}
+
+@app.post("/api/nuvem/criar-remoto")
+def criar_remoto_api(dados: CriarRemotoModel):
+    sucesso, msg = nuvem.criar_remoto(dados.nome, dados.tipo, dados.params)
+    return {"success": sucesso, "message": msg}
+
+@app.post("/api/nuvem/criar-crypt")
+def criar_crypt_api(dados: CriarCryptModel):
+    sucesso, msg = nuvem.criar_crypt(dados.nome, dados.remoto_base, dados.senha, dados.senha2)
+    return {"success": sucesso, "message": msg}
+
+@app.get("/api/nuvem/browser")
+def listar_pasta_nuvem(remoto: str, path: str = ""):
+    global CHAVE_MESTRA
+    if len(CHAVE_MESTRA) != 32:
+        raise HTTPException(status_code=401, detail="Cofre trancado.")
+    
+    if not nuvem.esta_disponivel():
+        raise HTTPException(status_code=500, detail="RClone não está disponível.")
+
+    itens = nuvem.listar_arquivos_json(remoto, path)
+    resultado = []
+    
+    for item in itens:
+        is_dir = item.get("IsDir", False)
+        nome = item.get("Name", "")
+        if is_dir or nome.lower().endswith(('.mp4', '.mkv', '.avi', '.qnt')):
+            caminho_item = f"{path}/{nome}".strip("/")
+            resultado.append({
+                "nome": nome,
+                "is_dir": is_dir,
+                "caminho_relativo": caminho_item
+            })
+            
+    resultado.sort(key=lambda x: (not x['is_dir'], x['nome'].lower()))
+    
+    parent = ""
+    if path:
+        partes = [p for p in path.split("/") if p]
+        if len(partes) > 1:
+            parent = "/".join(partes[:-1])
+            
+    return {"caminho_atual": path, "parent": parent, "itens": resultado}
 
 # --- MOTOR DE STREAMING QUÂNTICO ---
 @app.get("/play/{caminho_base64}")

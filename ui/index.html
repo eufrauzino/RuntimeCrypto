@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-br">
 
 <head>
@@ -11,12 +11,13 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-dark: #0f172a;
-            --accent: #3b82f6;
-            --accent-hover: #2563eb;
-            --text-light: #f8fafc;
-            --glass-bg: rgba(30, 41, 59, 0.7);
-            --glass-border: rgba(255, 255, 255, 0.1);
+            --bg-dark: #090e17;
+            --accent: #10b981;
+            --accent-hover: #059669;
+            --text-light: #e2e8f0;
+            --glass-bg: rgba(15, 23, 42, 0.85);
+            --glass-border: rgba(16, 185, 129, 0.2);
+            --panel-bg: rgba(11, 17, 32, 0.95);
         }
 
         body {
@@ -25,9 +26,10 @@
             font-family: 'Outfit', sans-serif;
             background: var(--bg-dark);
             color: var(--text-light);
-            background-image:
-                radial-gradient(circle at 15% 50%, rgba(59, 130, 246, 0.15) 0%, transparent 50%),
-                radial-gradient(circle at 85% 30%, rgba(147, 51, 234, 0.15) 0%, transparent 50%);
+            background-image: 
+                linear-gradient(rgba(16, 185, 129, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(16, 185, 129, 0.03) 1px, transparent 1px);
+            background-size: 30px 30px;
             height: 100vh;
             display: flex;
             flex-direction: column;
@@ -41,10 +43,13 @@
             display: flex;
             align-items: center;
             padding: 0 20px;
+            font-family: monospace;
             font-weight: 600;
-            font-size: 14px;
-            letter-spacing: 1px;
-            opacity: 0.8;
+            font-size: 13px;
+            letter-spacing: 2px;
+            background: #0f172a;
+            border-bottom: 1px solid var(--glass-border);
+            color: var(--accent);
         }
 
         .container {
@@ -62,12 +67,12 @@
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
             border: 1px solid var(--glass-border);
-            border-radius: 24px;
+            border-radius: 8px;
             padding: 3rem;
             text-align: center;
             max-width: 500px;
             width: 100%;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 0 40px rgba(0, 0, 0, 0.8), inset 0 0 20px rgba(16, 185, 129, 0.05);
             transition: all 0.4s ease;
         }
 
@@ -75,9 +80,9 @@
             margin-top: 0;
             font-size: 2.5rem;
             font-weight: 800;
-            background: linear-gradient(135deg, #60a5fa, #c084fc);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            color: var(--accent);
+            text-shadow: 0 0 15px rgba(16, 185, 129, 0.4);
+            letter-spacing: 1px;
             margin-bottom: 1rem;
         }
 
@@ -88,16 +93,18 @@
         }
 
         .btn-select {
-            background: var(--accent);
-            color: white;
-            border: none;
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--accent);
+            border: 1px solid var(--accent);
             padding: 1rem 2.5rem;
-            font-size: 1.1rem;
+            font-size: 1rem;
             font-weight: 600;
-            border-radius: 9999px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-radius: 4px;
             cursor: pointer;
             transition: all 0.3s ease;
-            box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4);
+            box-shadow: inset 0 0 10px rgba(16, 185, 129, 0.1), 0 0 10px rgba(16, 185, 129, 0.2);
             font-family: 'Outfit', sans-serif;
             display: inline-flex;
             align-items: center;
@@ -105,9 +112,10 @@
         }
 
         .btn-select:hover {
-            background: var(--accent-hover);
+            background: var(--accent);
+            color: #090e17;
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.6);
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.6);
         }
 
         .btn-select:active {
@@ -121,14 +129,16 @@
         }
 
         .progress-text {
-            color: #60a5fa;
+            color: var(--accent);
             font-weight: 600;
             margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
         .spinner {
-            border: 4px solid rgba(255, 255, 255, 0.1);
-            border-left-color: #60a5fa;
+            border: 4px solid rgba(16, 185, 129, 0.1);
+            border-left-color: var(--accent);
             border-radius: 50%;
             width: 30px;
             height: 30px;
@@ -137,13 +147,217 @@
         }
 
         @keyframes spin {
-            0% {
-                transform: rotate(0deg);
-            }
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
 
-            100% {
-                transform: rotate(360deg);
-            }
+        /* ------------------ BROWSER LAYOUT ------------------ */
+        .browser-layout {
+            display: flex;
+            gap: 20px;
+            height: 450px;
+            margin-top: 15px;
+            text-align: left;
+        }
+
+        .browser-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 0 5px;
+        }
+
+        .browser-sidebar {
+            flex: 1.5;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            overflow-y: auto;
+            padding-right: 10px;
+            border-right: 1px solid var(--glass-border);
+        }
+
+        .list-header {
+            display: flex;
+            align-items: center;
+            padding: 8px 10px;
+            margin-bottom: 5px;
+            border-bottom: 1px solid rgba(16, 185, 129, 0.2);
+            color: #94a3b8;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+        }
+
+        .list-header .col-name { flex: 1; }
+        .list-header .col-type { width: 80px; text-align: right; }
+
+        .browser-sidebar.view-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            grid-auto-rows: min-content;
+            gap: 15px;
+            flex-direction: row;
+            align-content: start;
+        }
+
+        .browser-sidebar.view-grid .list-header {
+            display: none;
+        }
+
+        .browser-item {
+            background: transparent;
+            padding: 8px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+            text-align: left;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            word-break: break-word;
+        }
+
+        .browser-item:hover {
+            background: rgba(16, 185, 129, 0.05);
+        }
+        
+        .browser-item.selected {
+            background: rgba(16, 185, 129, 0.1);
+            border-color: rgba(16, 185, 129, 0.3);
+        }
+
+        .browser-item .item-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent);
+        }
+
+        .browser-item .item-icon svg {
+            width: 20px;
+            height: 20px;
+            fill: currentColor;
+        }
+
+        .browser-item .item-name {
+            flex: 1;
+            font-size: 0.9rem;
+            color: var(--text-light);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .browser-item .item-type {
+            width: 80px;
+            text-align: right;
+            font-size: 0.8rem;
+            color: #64748b;
+        }
+
+        .view-grid .browser-item {
+            flex-direction: column;
+            text-align: center;
+            padding: 20px 10px;
+            height: 110px;
+            background: rgba(11, 17, 32, 0.5);
+            border: 1px solid rgba(16, 185, 129, 0.1);
+            justify-content: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+
+        .view-grid .browser-item:hover {
+            background: rgba(16, 185, 129, 0.05);
+            border-color: var(--accent);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.5), inset 0 0 10px rgba(16, 185, 129, 0.1);
+        }
+
+        .view-grid .browser-item .item-icon svg {
+            width: 40px;
+            height: 40px;
+            margin-bottom: 8px;
+        }
+
+        .view-grid .browser-item .item-name {
+            white-space: normal;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            line-height: 1.2;
+        }
+
+        .view-grid .browser-item .item-type {
+            display: none;
+        }
+
+        .breadcrumb-container {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-light);
+            flex-wrap: wrap;
+            max-width: 70%;
+        }
+
+        .breadcrumb-item {
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        
+        .breadcrumb-item:hover {
+            color: var(--accent);
+        }
+
+        .breadcrumb-separator {
+            color: #475569;
+            font-size: 0.8rem;
+        }
+
+        .browser-preview {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: var(--panel-bg);
+            border-radius: 8px;
+            border: 1px solid rgba(16, 185, 129, 0.15);
+            padding: 15px;
+            position: relative;
+            box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.8);
+        }
+
+        .preview-video {
+            width: 100%;
+            max-height: 200px;
+            background: #000;
+            border-radius: 4px;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            object-fit: contain;
+            margin-bottom: 15px;
+        }
+
+        .btn-icon {
+            background: rgba(16, 185, 129, 0.05);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            color: var(--accent);
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: 0.2s;
+            font-family: inherit;
+        }
+
+        .btn-icon:hover {
+            background: rgba(16, 185, 129, 0.2);
+            border-color: var(--accent);
         }
 
         /* ------------------ VIEW: PLAYER ------------------ */
@@ -157,13 +371,8 @@
         }
 
         @keyframes fadeIn {
-            from {
-                opacity: 0;
-            }
-
-            to {
-                opacity: 1;
-            }
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
 
         .video-container {
@@ -187,21 +396,280 @@
             position: absolute;
             top: 20px;
             left: 20px;
-            background: rgba(0, 0, 0, 0.5);
-            color: white;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            padding: 8px 16px;
-            border-radius: 8px;
+            background: rgba(11, 17, 32, 0.9);
+            color: var(--accent);
+            border: 1px solid var(--accent);
+            padding: 10px 20px;
+            border-radius: 4px;
             cursor: pointer;
             z-index: 10;
-            font-family: inherit;
-            backdrop-filter: blur(4px);
-            transition: all 0.2s;
+            font-family: 'Outfit', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+            backdrop-filter: blur(8px);
+            transition: all 0.3s ease;
+            box-shadow: inset 0 0 10px rgba(16, 185, 129, 0.1), 0 0 15px rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
         .back-btn:hover {
-            background: rgba(0, 0, 0, 0.8);
+            background: var(--accent);
+            color: #090e17;
+            transform: translateY(-2px);
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.6);
         }
+
+        /* ------------------ WIZARD RCLONE ------------------ */
+        .wizard-steps {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 28px;
+        }
+        .wizard-dot {
+            width: 10px; height: 10px;
+            border-radius: 50%;
+            background: rgba(16,185,129,0.2);
+            border: 1px solid rgba(16,185,129,0.3);
+            transition: all 0.3s;
+        }
+        .wizard-dot.active {
+            background: var(--accent);
+            box-shadow: 0 0 8px rgba(16,185,129,0.7);
+            transform: scale(1.3);
+        }
+        .wizard-dot.done {
+            background: rgba(16,185,129,0.5);
+        }
+        .wizard-step-title {
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: var(--accent);
+            margin-bottom: 6px;
+            text-shadow: 0 0 10px rgba(16,185,129,0.3);
+        }
+        .wizard-step-sub {
+            color: #94a3b8;
+            font-size: 0.95rem;
+            margin-bottom: 22px;
+        }
+        .provedor-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+        .provedor-card {
+            background: rgba(11,17,32,0.8);
+            border: 1px solid rgba(16,185,129,0.15);
+            border-radius: 10px;
+            padding: 20px 10px 14px;
+            cursor: pointer;
+            transition: all 0.25s;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+        .provedor-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.5), inset 0 0 12px rgba(16,185,129,0.08);
+        }
+        .provedor-card .prov-icon {
+            width: 44px; height: 44px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            font-weight: 900;
+            color: #fff;
+        }
+        .provedor-card .prov-nome {
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--text-light);
+            line-height: 1.2;
+        }
+        .wizard-input {
+            width: 100%;
+            padding: 12px 14px;
+            border-radius: 8px;
+            border: 1px solid var(--glass-border);
+            background: rgba(0,0,0,0.4);
+            color: white;
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.95rem;
+            box-sizing: border-box;
+            outline: none;
+            margin-bottom: 12px;
+            transition: border-color 0.3s;
+        }
+        .wizard-input:focus { border-color: var(--accent); }
+        .wizard-input::placeholder { color: #475569; }
+        .wizard-label {
+            font-size: 0.8rem;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 5px;
+            text-align: left;
+            display: block;
+        }
+        .wizard-btn {
+            width: 100%;
+            background: rgba(16,185,129,0.1);
+            color: var(--accent);
+            border: 1px solid var(--accent);
+            padding: 12px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: 'Outfit', sans-serif;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 6px;
+        }
+        .wizard-btn:hover {
+            background: var(--accent);
+            color: #090e17;
+            box-shadow: 0 0 18px rgba(16,185,129,0.5);
+        }
+        .wizard-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .wizard-btn.secondary {
+            background: transparent;
+            border-color: rgba(16,185,129,0.3);
+            color: #64748b;
+            margin-top: 8px;
+        }
+        .wizard-btn.secondary:hover {
+            background: rgba(255,255,255,0.05);
+            color: var(--text-light);
+            box-shadow: none;
+        }
+        .oauth-waiting {
+            background: rgba(11,17,32,0.9);
+            border: 1px solid rgba(16,185,129,0.2);
+            border-radius: 10px;
+            padding: 24px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .oauth-waiting .spinner {
+            margin: 0 auto 14px;
+        }
+        .oauth-waiting p {
+            color: #94a3b8;
+            font-size: 0.9rem;
+            margin: 0 0 12px;
+        }
+        .oauth-link {
+            color: var(--accent);
+            font-size: 0.85rem;
+            word-break: break-all;
+            text-decoration: none;
+            display: block;
+            padding: 8px;
+            border: 1px dashed rgba(16,185,129,0.3);
+            border-radius: 6px;
+            margin-top: 8px;
+        }
+        .oauth-link:hover { border-color: var(--accent); }
+        .wizard-error {
+            background: rgba(239,68,68,0.1);
+            border: 1px solid rgba(239,68,68,0.3);
+            border-radius: 6px;
+            padding: 10px 14px;
+            color: #ef4444;
+            font-size: 0.88rem;
+            margin-bottom: 12px;
+            display: none;
+        }
+        .success-icon {
+            font-size: 3.5rem;
+            margin-bottom: 16px;
+            filter: drop-shadow(0 0 15px rgba(16,185,129,0.5));
+        }
+        #wizard-subpasta-row {
+            background: rgba(16,185,129,0.05);
+            border: 1px solid rgba(16,185,129,0.2);
+            border-radius: 8px;
+            padding: 14px 16px 6px;
+            margin-bottom: 16px;
+        }
+        #wizard-subpasta-row .wizard-label {
+            color: var(--accent);
+            font-size: 0.82rem;
+        }
+        .tipo-escolha-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+            margin-bottom: 14px;
+        }
+        .tipo-card {
+            background: rgba(11,17,32,0.8);
+            border: 1px solid rgba(16,185,129,0.15);
+            border-radius: 12px;
+            padding: 22px 16px 18px;
+            cursor: pointer;
+            transition: all 0.25s;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+        .tipo-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 24px rgba(0,0,0,0.5), inset 0 0 14px rgba(16,185,129,0.07);
+        }
+        .tipo-card .tipo-icon {
+            font-size: 2rem;
+            filter: drop-shadow(0 0 8px rgba(16,185,129,0.3));
+        }
+        .tipo-card .tipo-nome {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text-light);
+        }
+        .tipo-card .tipo-desc {
+            font-size: 0.78rem;
+            color: #64748b;
+            line-height: 1.4;
+        }
+        .tipo-card:hover .tipo-nome { color: var(--accent); }
+        .wizard-divider {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 4px 0 14px;
+            color: #475569;
+            font-size: 0.78rem;
+        }
+        .wizard-divider::before, .wizard-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: rgba(16,185,129,0.15);
+        }
+
     </style>
 </head>
 
@@ -238,74 +706,184 @@
             </button>
         </div>
 
-        <!-- View 1: Selector -->
-        <div class="select-view" id="select-view" style="display: none;">
-            <h1>Cofre Quântico</h1>
-            <p>Selecione um vídeo. Ele será protegido e reproduzido em tempo real sem rastros descritografados.</p>
-
-            <button class="btn-select" onclick="abrirNavegadorLocal()">
-                <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4m14-7l-5-5m0 0l-5 5m5-5v12"></path>
-                </svg>
-                Selecionar Vídeo Local
-            </button>
-
-            <div id="historico-container"
-                style="margin-top: 2rem; border-top: 1px solid var(--glass-border); padding-top: 1.5rem; display: none;">
-                <h3
-                    style="font-size: 1rem; color: #94a3b8; margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 1px;">
-                    Vídeos Recentes</h3>
-                <div id="lista-historico"
-                    style="display: flex; flex-direction: column; gap: 10px; max-height: 200px; overflow-y: auto; padding-right: 5px;">
-                    <!-- Itens do histórico entram aqui -->
+        <!-- View 1.2: Local Browser -->
+        <div class="select-view" id="local-browser-view" style="display: none; max-width: 800px;">
+            <div class="browser-toolbar">
+                <div style="font-family: monospace; font-size: 0.9rem; opacity: 0.7; word-break: break-all; max-width: 70%;" id="local-path">/</div>
+                <div style="display: flex; gap: 5px;">
+                    <button class="btn-icon" onclick="mudarLayout('local', 'list')" title="Ver em Lista">🔡</button>
+                    <button class="btn-icon" onclick="mudarLayout('local', 'grid')" title="Ver em Grade">🔲</button>
                 </div>
             </div>
-        </div>
 
-        <!-- View 1.2: Local Browser -->
-        <div class="select-view" id="local-browser-view" style="display: none;">
-            <h1>Arquivos Locais</h1>
-            <p id="local-path" style="font-family: monospace; font-size: 0.9rem; word-break: break-all; opacity: 0.7;">/
-            </p>
+            <div class="browser-layout">
+                <!-- Sidebar with files -->
+                <div class="browser-sidebar" id="local-files">
+                    <!-- Arquivos da máquina renderizados via API -->
+                </div>
 
-            <div id="local-files"
-                style="display: flex; flex-direction: column; gap: 8px; max-height: 350px; overflow-y: auto; text-align: left; padding-right: 10px;">
-                <!-- Arquivos da máquina renderizados via API -->
+                <!-- Preview pane -->
+                <div class="browser-preview" id="local-preview">
+                    <p style="color: #94a3b8; font-size: 0.9rem;" id="preview-placeholder">Passe o mouse ou selecione um vídeo para pré-visualizar</p>
+                    <div id="preview-content" style="display: none; width: 100%; text-align: center;">
+                        <video id="preview-player" class="preview-video" muted autoplay loop></video>
+                        <p id="preview-title" style="font-size: 0.9rem; margin-bottom: 15px; font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"></p>
+                        <button class="btn-select" id="btn-play-preview" style="font-size: 0.9rem; padding: 8px 16px;">
+                            Assistir Completo
+                        </button>
+                    </div>
+                    <div id="preview-loading" style="display: none; flex-direction: column; align-items: center;">
+                        <div class="spinner"></div>
+                        <p style="font-size: 0.8rem; margin-top: 10px;">Preparando visualização...</p>
+                    </div>
+                </div>
             </div>
-
-            <button class="btn-select" onclick="mostrarSelector()"
-                style="margin-top: 20px; font-size: 0.9rem; padding: 10px 20px; background: rgba(255,255,255,0.05);">
-                Voltar
-            </button>
         </div>
 
         <!-- View 1.5: Selector NUVEM -->
-        <div class="select-view" id="cloud-view" style="display: none;">
-            <h1>Nuvem Segura</h1>
-            <p id="cloud-status">Carregando drives do RClone...</p>
-
+        <div class="select-view" id="cloud-view" style="display: none; max-width: 800px;">
             <div id="cloud-remotes" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;">
-                <!-- Lista de remotos do RClone -->
+                <h1>Nuvem Segura</h1>
+                <p id="cloud-status">Carregando drives do RClone...</p>
             </div>
 
             <div id="cloud-browser" style="display: none;">
-                <div id="cloud-nav-path"
-                    style="margin-bottom: 15px; font-size: 0.9rem; color: #94a3b8; text-align: left; word-break: break-all;">
+                <div class="browser-toolbar">
+                    <div style="font-family: monospace; font-size: 0.9rem; opacity: 0.7; word-break: break-all; max-width: 70%; text-align: left;" id="cloud-nav-path"></div>
+                    <div style="display: flex; gap: 5px;">
+                        <button class="btn-icon" onclick="mudarLayout('cloud', 'list')" title="Ver em Lista">🔡</button>
+                        <button class="btn-icon" onclick="mudarLayout('cloud', 'grid')" title="Ver em Grade">🔲</button>
+                    </div>
                 </div>
-                <div id="cloud-files"
-                    style="display: flex; flex-direction: column; gap: 8px; max-height: 350px; overflow-y: auto; text-align: left; padding-right: 10px;">
-                    <!-- Arquivos da nuvem -->
+                
+                <div class="browser-layout">
+                    <div class="browser-sidebar" id="cloud-files"></div>
+                    <div class="browser-preview" id="cloud-preview">
+                        <p style="color: #94a3b8; font-size: 0.9rem;" id="cloud-preview-placeholder">Passe o mouse ou selecione um vídeo para pré-visualizar</p>
+                        <div id="cloud-preview-content" style="display: none; width: 100%; text-align: center;">
+                            <video id="cloud-preview-player" class="preview-video" muted autoplay loop></video>
+                            <p id="cloud-preview-title" style="font-size: 0.9rem; margin-bottom: 15px; font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"></p>
+                            <button class="btn-select" id="btn-play-cloud-preview" style="font-size: 0.9rem; padding: 8px 16px;">Assistir Completo</button>
+                        </div>
+                        <div id="cloud-preview-loading" style="display: none; flex-direction: column; align-items: center;">
+                            <div class="spinner"></div>
+                            <p style="font-size: 0.8rem; margin-top: 10px;">Preparando visualização...</p>
+                        </div>
+                    </div>
                 </div>
+
                 <div style="display: flex; justify-content: center; gap: 15px; margin-top: 20px;">
-                    <button class="btn-select" onclick="voltarPastaNuvem()" id="btn-back-folder"
-                        style="display: none; font-size: 0.9rem; padding: 10px 20px; background: rgba(59, 130, 246, 0.2);">
-                        ⬅️ Voltar Pasta
-                    </button>
-                    <button class="btn-select" onclick="desconectarNuvem()"
-                        style="font-size: 0.9rem; padding: 10px 20px; background: rgba(255,255,255,0.05);">
-                        Trocar Drive
-                    </button>
+                    <button class="btn-select" onclick="desconectarNuvem()" style="font-size: 0.9rem; padding: 10px 20px; background: rgba(255,255,255,0.05);">Trocar Drive</button>
                 </div>
+            </div>
+        </div>
+
+        <!-- View 1.7: Wizard de Configuração RClone -->
+        <div class="select-view" id="wizard-view" style="display: none; max-width: 560px;">
+            <div class="wizard-steps" id="wizard-dots"></div>
+
+            <!-- Passo 1: Tipo de armazenamento + Provedor em nuvem -->
+            <div id="wizard-passo-1">
+                <!-- Fase A: escolha do tipo -->
+                <div id="wizard-tipo-escolha">
+                    <div class="wizard-step-title">Onde ficam seus arquivos?</div>
+                    <div class="wizard-step-sub">Escolha como o cofre criptografado será armazenado:</div>
+                    <div class="tipo-escolha-grid">
+                        <div class="tipo-card" onclick="wizard.escolherNuvem()">
+                            <div class="tipo-icon">☁️</div>
+                            <div class="tipo-nome">Pasta na Nuvem</div>
+                            <div class="tipo-desc">Google Drive, Dropbox, OneDrive, S3. Arquivos ficam na nuvem, criptografados. Nada é mapeado no PC.</div>
+                        </div>
+                        <div class="tipo-card" onclick="wizard.escolherLocal()">
+                            <div class="tipo-icon">💾</div>
+                            <div class="tipo-nome">Pasta Local</div>
+                            <div class="tipo-desc">Uma pasta no seu computador. Os arquivos ficam salvos localmente, criptografados pelo rclone crypt.</div>
+                        </div>
+                    </div>
+                    <button class="wizard-btn secondary" onclick="fecharWizard()">← Cancelar</button>
+                </div>
+
+                <!-- Fase B: grid de provedores (só para nuvem) -->
+                <div id="wizard-provider-escolha" style="display:none;">
+                    <div class="wizard-step-title">Escolha o Provedor</div>
+                    <div class="wizard-step-sub">Onde na nuvem os arquivos serão armazenados?</div>
+                    <div class="provedor-grid" id="wizard-provedor-grid"></div>
+                    <button class="wizard-btn secondary" onclick="wizard.voltarParaTipo()">← Voltar</button>
+                </div>
+            </div>
+
+            <!-- Passo 2a: Aguardando OAuth -->
+            <div id="wizard-passo-2-oauth" style="display:none;">
+                <div class="wizard-step-title" id="wizard-oauth-titulo">Autorizar Acesso</div>
+                <div class="wizard-step-sub">Complete a autenticação no navegador e volte aqui.</div>
+                <div class="oauth-waiting">
+                    <div class="spinner"></div>
+                    <p id="wizard-oauth-status">Iniciando autenticação...</p>
+                    <a id="wizard-oauth-link" href="#" target="_blank" class="oauth-link" style="display:none;">🔗 Abrir link de autorização manualmente</a>
+                </div>
+                <div class="wizard-error" id="wizard-oauth-erro"></div>
+                <button class="wizard-btn secondary" onclick="cancelarOAuth(); wizard.voltarPasso1()">✕ Cancelar</button>
+            </div>
+
+            <!-- Passo 2b: Campos manuais (S3) -->
+            <div id="wizard-passo-2-campos" style="display:none;">
+                <div class="wizard-step-title" id="wizard-campos-titulo">Configurar Conexão</div>
+                <div class="wizard-step-sub" id="wizard-campos-sub">Preencha os dados de acesso:</div>
+                <div class="wizard-error" id="wizard-campos-erro"></div>
+                <div id="wizard-campos-form"></div>
+                <button class="wizard-btn" id="wizard-btn-confirmar-campos" onclick="wizard.confirmarCampos()">Continuar →</button>
+                <button class="wizard-btn secondary" onclick="wizard.voltarPasso1()">← Voltar</button>
+            </div>
+
+            <!-- Passo 2c: Pasta Local -->
+            <div id="wizard-passo-2-local" style="display:none;">
+                <div class="wizard-step-title">💾 Pasta Local</div>
+                <div class="wizard-step-sub">Informe onde os arquivos criptografados serão armazenados no seu computador:</div>
+                <div class="wizard-error" id="wizard-local-erro"></div>
+                <label class="wizard-label">Caminho da pasta *</label>
+                <input class="wizard-input" id="wizard-local-path" placeholder="ex: C:\Users\Você\Videos\Cripto">
+                <p style="font-size:0.78rem;color:#475569;margin:-6px 0 16px;text-align:left;">
+                    A pasta pode não existir ainda — o rclone irá criá-la automaticamente. Os arquivos serão armazenados criptografados neste local, sem nenhum mapeamento de unidade.
+                </p>
+                <button class="wizard-btn" onclick="wizard.confirmarLocal()">Continuar →</button>
+                <button class="wizard-btn secondary" onclick="wizard.voltarParaTipo()">← Voltar</button>
+            </div>
+
+            <!-- Passo 3: Configurar Crypt -->
+            <div id="wizard-passo-3" style="display:none;">
+                <div class="wizard-step-title">🔐 Configurar Cofre</div>
+                <div class="wizard-step-sub">Defina onde e como seu drive criptografado será criado:</div>
+                <div class="wizard-error" id="wizard-crypt-erro"></div>
+
+                <!-- Subpasta no drive (apenas para provedores em nuvem, não local) -->
+                <div id="wizard-subpasta-row">
+                    <label class="wizard-label">📁 Pasta no Drive onde os arquivos ficam *</label>
+                    <input class="wizard-input" id="wizard-crypt-subpasta" placeholder="ex: RuntimeCrypto/vault" value="RuntimeCrypto">
+                    <p style="font-size:0.78rem;color:#475569;margin:-6px 0 14px;text-align:left;">
+                        Os arquivos criptografados serão armazenados nesta pasta dentro do seu drive remoto.
+                    </p>
+                </div>
+
+                <label class="wizard-label">Nome do drive criptografado (somente letras e números) *</label>
+                <input class="wizard-input" id="wizard-crypt-nome" placeholder="ex: meufilmes" maxlength="30">
+
+                <label class="wizard-label">Senha do cofre *</label>
+                <input class="wizard-input" type="password" id="wizard-crypt-senha" placeholder="Mínimo 6 caracteres...">
+
+                <label class="wizard-label">Confirmar senha *</label>
+                <input class="wizard-input" type="password" id="wizard-crypt-senha2" placeholder="Digite novamente...">
+
+                <button class="wizard-btn" id="wizard-btn-criar-crypt" onclick="wizard.criarCrypt()">Criar Cofre Criptografado</button>
+                <button class="wizard-btn secondary" onclick="wizard.voltarPasso2()">← Voltar</button>
+            </div>
+
+
+            <!-- Passo 4: Sucesso -->
+            <div id="wizard-passo-4" style="display:none; text-align:center;">
+                <div class="success-icon">🎉</div>
+                <div class="wizard-step-title">Configuração Concluída!</div>
+                <p id="wizard-sucesso-msg" style="color:#94a3b8; margin-bottom:24px;"></p>
+                <button class="wizard-btn" onclick="wizard.finalizar()">Ir para a Nuvem →</button>
             </div>
         </div>
 
@@ -318,7 +896,7 @@
         <!-- View 2: Player -->
         <div class="player-view" id="player-view">
             <div class="video-container">
-                <button class="back-btn" onclick="voltar()">Ver Outro</button>
+                <button class="back-btn" onclick="voltar()">⬅️ Voltar ao Navegador</button>
                 <video id="main-player" controls autoplay controlslist="nodownload"></video>
             </div>
         </div>
@@ -334,6 +912,63 @@
             } catch (e) {
                 return { success: false, error: e.message };
             }
+        }
+
+        let currentRemoto = "";
+        let hoverTimeout = null;
+
+        const iconFolder = `<svg viewBox="0 0 24 24"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>`;
+        const iconVideo = `<svg viewBox="0 0 24 24"><path d="M18 3v2h-2V3H8v2H6V3H4v18h2v-2h2v2h8v-2h2v2h2V3h-2zM8 17H6v-2h2v2zm0-4H6v-2h2v2zm0-4H6V7h2v2zm10 8h-2v-2h2v2zm0-4h-2v-2h2v2zm0-4h-2V7h2v2z"/></svg>`;
+
+        function renderBreadcrumb(containerId, pathStr, isCloud, callback) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+            container.className = 'breadcrumb-container';
+            
+            let prefix = isCloud ? "☁️ " + currentRemoto : "💻 Meu Computador";
+            let parts = [];
+            
+            if (isCloud) {
+                parts = pathStr.split("/").filter(p => p !== "");
+            } else {
+                let norm = pathStr.replace(/\\/g, "/");
+                parts = norm.split("/").filter(p => p !== "");
+                if (pathStr === "") parts = [];
+            }
+
+            const rootNode = document.createElement('span');
+            rootNode.className = 'breadcrumb-item';
+            rootNode.innerText = prefix;
+            rootNode.onclick = () => callback(isCloud ? "" : ""); // Root path
+            container.appendChild(rootNode);
+
+            let currentPathAcc = "";
+
+            parts.forEach((part, index) => {
+                const sep = document.createElement('span');
+                sep.className = 'breadcrumb-separator';
+                sep.innerText = '>';
+                container.appendChild(sep);
+
+                const node = document.createElement('span');
+                node.className = 'breadcrumb-item';
+                node.innerText = part;
+                
+                let targetPath = "";
+                if (isCloud) {
+                    targetPath = parts.slice(0, index + 1).join("/");
+                } else {
+                    if (pathStr.startsWith("/")) { 
+                        targetPath = "/" + parts.slice(0, index + 1).join("/");
+                    } else { 
+                        targetPath = parts.slice(0, index + 1).join("/");
+                        if (index === 0 && targetPath.endsWith(":")) targetPath += "/";
+                    }
+                }
+                
+                node.onclick = () => callback(targetPath);
+                container.appendChild(node);
+            });
         }
 
         window.addEventListener('DOMContentLoaded', async function () {
@@ -361,15 +996,19 @@
             const status = await fetchAPI('/api/cofre/status');
             if (!status.existe) {
                 const res = await fetchAPI('/api/cofre/inicializar', 'POST', { senha });
-                if (res.success) mostrarSelector();
-                else {
+                if (res.success) {
+                    document.getElementById('lock-view').style.display = 'none';
+                    mudarAba('local');
+                } else {
                     errorMsg.innerText = "Falha ao criar cofre: " + res.error;
                     errorMsg.style.display = 'block';
                 }
             } else {
                 const res = await fetchAPI('/api/cofre/abrir', 'POST', { senha });
-                if (res.success) mostrarSelector();
-                else {
+                if (res.success) {
+                    document.getElementById('lock-view').style.display = 'none';
+                    mudarAba('local');
+                } else {
                     errorMsg.innerText = res.error;
                     errorMsg.style.display = 'block';
                     senhaInput.style.borderColor = "#ef4444";
@@ -378,239 +1017,377 @@
             }
         }
 
-        function mostrarSelector() {
-            document.getElementById('loading-view').style.display = 'none';
-            document.getElementById('lock-view').style.display = 'none';
-            document.getElementById('select-view').style.display = 'block';
-            document.getElementById('local-browser-view').style.display = 'none';
-            document.getElementById('tabs-nav').style.display = 'flex';
-            carregarHistorico();
-        }
-
         function mudarAba(aba) {
+            document.getElementById('tabs-nav').style.display = 'flex';
+            document.getElementById('wizard-view').style.display = 'none';
             if (aba === 'local') {
-                mostrarSelector();
                 document.getElementById('cloud-view').style.display = 'none';
+                document.getElementById('local-browser-view').style.display = 'block';
                 document.getElementById('tab-local').style.opacity = '1';
                 document.getElementById('tab-local').style.color = 'var(--accent)';
                 document.getElementById('tab-nuvem').style.opacity = '0.5';
                 document.getElementById('tab-nuvem').style.color = 'white';
+                if (document.getElementById('local-files').innerHTML === "") {
+                    navegarPastaLocal("");
+                }
             } else {
-                document.getElementById('select-view').style.display = 'none';
                 document.getElementById('local-browser-view').style.display = 'none';
                 document.getElementById('cloud-view').style.display = 'block';
                 document.getElementById('tab-nuvem').style.opacity = '1';
                 document.getElementById('tab-nuvem').style.color = 'var(--accent)';
                 document.getElementById('tab-local').style.opacity = '0.5';
                 document.getElementById('tab-local').style.color = 'white';
-                carregarNuvem();
+                if (!currentRemoto) {
+                    carregarNuvem();
+                } else {
+                    document.getElementById('cloud-browser').style.display = 'block';
+                }
+            }
+        }
+
+        function mudarLayout(tipo, layout) {
+            const containerId = tipo === 'local' ? 'local-files' : 'cloud-files';
+            const container = document.getElementById(containerId);
+            if (layout === 'grid') {
+                container.classList.add('view-grid');
+            } else {
+                container.classList.remove('view-grid');
             }
         }
 
         async function carregarNuvem() {
-            const status = await fetchAPI('/api/nuvem/status');
-            const statusTxt = document.getElementById('cloud-status');
             const remotesDiv = document.getElementById('cloud-remotes');
+            document.getElementById('cloud-browser').style.display = 'none';
+
+            // Spinner de carregamento
+            remotesDiv.innerHTML = `
+                <h1>Nuvem Segura</h1>
+                <div style="display:flex;align-items:center;gap:12px;padding:16px 0;color:#64748b;font-size:0.9rem;">
+                    <div class="spinner" style="width:18px;height:18px;border-width:2px;"></div>
+                    Verificando RClone...
+                </div>`;
+            remotesDiv.style.display = 'flex';
+
+            const status = await fetchAPI('/api/nuvem/status');
 
             if (!status || !status.disponivel) {
-                statusTxt.innerText = "RClone não encontrado no sistema.";
+                remotesDiv.innerHTML = `
+                    <h1>Nuvem Segura</h1>
+                    <div style="padding:20px;background:rgba(11,17,32,0.8);border:1px solid rgba(239,68,68,0.3);border-radius:8px;margin-top:4px;">
+                        <h3 style="color:#ef4444;margin-top:0;">Motor de Nuvem Ausente</h3>
+                        <p style="font-size:0.9rem;margin-bottom:20px;color:var(--text-light);">
+                            O <strong>RClone</strong> não foi detectado no sistema.<br>
+                            <span style="font-size:0.82rem;color:#64748b;">Ele é necessário para conectar com Google Drive, Dropbox, S3, etc.</span>
+                        </p>
+                        <button class="btn-select" id="btn-install-rclone" onclick="instalarRClone()"
+                            style="font-size:0.9rem;padding:10px 24px;border-color:#ef4444;color:#ef4444;">
+                            📥 Baixar e Instalar Automaticamente
+                        </button>
+                    </div>`;
                 return;
             }
 
             if (status.remotos.length === 0) {
-                statusTxt.innerText = "Nenhum drive remoto configurado no RClone.";
+                abrirWizard();
                 return;
             }
 
-            statusTxt.innerText = "Selecione um drive remoto:";
-            remotesDiv.innerHTML = '';
+            remotesDiv.innerHTML = '<h1>Nuvem Segura</h1>';
+            const labelEl = document.createElement('p');
+            labelEl.style = 'color:#64748b;font-size:0.85rem;margin:0 0 10px;text-transform:uppercase;letter-spacing:1px;font-weight:600;';
+            labelEl.innerText = 'Drives configurados:';
+            remotesDiv.appendChild(labelEl);
+
             status.remotos.forEach(r => {
                 const btn = document.createElement('div');
-                btn.style = "background: var(--accent); padding: 15px; border-radius: 12px; cursor: pointer; font-weight: 600; transition: 0.3s;";
-                btn.innerText = `☁️ ${r}`;
+                btn.style = 'background:rgba(16,185,129,0.08);border:1px solid var(--glass-border);padding:14px 16px;border-radius:8px;cursor:pointer;font-weight:600;transition:all 0.25s;display:flex;align-items:center;gap:12px;';
+                btn.innerHTML = `<span style="font-size:1.2rem;">☁️</span><span style="flex:1;">${r}</span><span style="font-size:0.75rem;color:#64748b;font-weight:400;">crypt</span>`;
+                btn.onmouseover = () => { btn.style.borderColor='var(--accent)'; btn.style.background='rgba(16,185,129,0.13)'; };
+                btn.onmouseleave = () => { btn.style.borderColor='var(--glass-border)'; btn.style.background='rgba(16,185,129,0.08)'; };
                 btn.onclick = () => conectarNuvem(r);
                 remotesDiv.appendChild(btn);
             });
+
+            const btnAdd = document.createElement('button');
+            btnAdd.className = 'btn-select';
+            btnAdd.style = 'font-size:0.82rem;padding:8px 18px;margin-top:6px;background:transparent;border-color:rgba(16,185,129,0.25);color:#64748b;align-self:flex-start;';
+            btnAdd.innerHTML = '＋ Adicionar novo drive';
+            btnAdd.onmouseover = () => { btnAdd.style.color='var(--accent)'; btnAdd.style.borderColor='var(--accent)'; };
+            btnAdd.onmouseleave = () => { btnAdd.style.color='#64748b'; btnAdd.style.borderColor='rgba(16,185,129,0.25)'; };
+            btnAdd.onclick = abrirWizard;
+            remotesDiv.appendChild(btnAdd);
         }
 
-        let baseCloudUrl = "";
-        let currentCloudPath = "";
+
+        async function instalarRClone() {
+            const remotesDiv = document.getElementById('cloud-remotes');
+            remotesDiv.innerHTML = `
+                <h1>Nuvem Segura</h1>
+                <div style="padding:24px;background:rgba(11,17,32,0.8);border:1px solid rgba(16,185,129,0.2);border-radius:8px;margin-top:4px;text-align:center;">
+                    <div class="spinner" style="margin:0 auto 16px;"></div>
+                    <p style="color:var(--text-light);margin:0 0 6px;font-weight:600;">Baixando RClone...</p>
+                    <p style="color:#64748b;font-size:0.85rem;margin:0;">Isso pode levar alguns segundos dependendo da sua conexão.</p>
+                </div>`;
+
+            const res = await fetchAPI('/api/nuvem/instalar', 'POST');
+            if (res.success) {
+                carregarNuvem();
+            } else {
+                remotesDiv.innerHTML = `
+                    <h1>Nuvem Segura</h1>
+                    <div style="padding:20px;background:rgba(11,17,32,0.8);border:1px solid rgba(239,68,68,0.3);border-radius:8px;margin-top:4px;">
+                        <h3 style="color:#ef4444;margin-top:0;">Falha na Instalação</h3>
+                        <p style="font-size:0.85rem;color:#94a3b8;margin-bottom:16px;font-family:monospace;">${res.message}</p>
+                        <button class="btn-select" id="btn-install-rclone" onclick="instalarRClone()"
+                            style="font-size:0.9rem;padding:10px 24px;border-color:#ef4444;color:#ef4444;">
+                            🔄 Tentar Novamente
+                        </button>
+                    </div>`;
+            }
+        }
 
         async function conectarNuvem(remoto) {
+            currentRemoto = remoto.replace(':', '');
+            
             document.getElementById('cloud-remotes').style.display = 'none';
-            document.getElementById('cloud-status').innerText = `Conectando ao drive ${remoto}...`;
+            document.getElementById('cloud-status').style.display = 'block';
+            document.getElementById('cloud-status').innerText = "Conectando ao cofre nativo RClone Crypt...";
 
-            window.pywebview.api.conectar_nuvem(remoto).then(res => {
-                if (res.success) {
-                    navegarArquivosNuvem(res.url);
-                } else {
-                    alert("Falha na conexão: " + res.error);
-                    desconectarNuvem();
-                }
-            });
+            const res = await fetchAPI('/api/nuvem/conectar', 'POST', { remoto: currentRemoto + ':' });
+            if (res.success) {
+                window.baseCloudUrl = res.url; // Armazena a url do servidor VFS local
+                document.getElementById('cloud-status').style.display = 'none';
+                navegarArquivosNuvem("");
+            } else {
+                alert("Falha na conexão RClone Crypt: " + res.error);
+                desconectarNuvem();
+            }
         }
 
-        function navegarArquivosNuvem(caminhoRelativo) {
+        async function navegarArquivosNuvem(caminhoRelativo) {
             currentCloudPath = caminhoRelativo;
-            if (!currentCloudPath.startsWith('/')) currentCloudPath = '/' + currentCloudPath;
 
-            document.getElementById('cloud-status').innerText = "Arquivos disponíveis na nuvem:";
             document.getElementById('cloud-browser').style.display = 'block';
-            document.getElementById('cloud-nav-path').innerText = "Caminho: " + currentCloudPath;
-
-            const btnBack = document.getElementById('btn-back-folder');
-            if (currentCloudPath === '/' || currentCloudPath === '') {
-                btnBack.style.display = 'none';
-            } else {
-                btnBack.style.display = 'inline-flex';
-            }
+            renderBreadcrumb('cloud-nav-path', currentCloudPath, true, navegarArquivosNuvem);
+            
+            // Limpa preview
+            document.getElementById('cloud-preview-placeholder').style.display = 'block';
+            document.getElementById('cloud-preview-content').style.display = 'none';
+            document.getElementById('cloud-preview-loading').style.display = 'none';
+            const cloudPreviewPlayer = document.getElementById('cloud-preview-player');
+            cloudPreviewPlayer.pause();
+            cloudPreviewPlayer.removeAttribute('src');
+            cloudPreviewPlayer.load();
 
             const filesDiv = document.getElementById('cloud-files');
-            filesDiv.innerHTML = '<div class="spinner"></div>';
+            filesDiv.innerHTML = '<div class="spinner" style="margin-top: 20px;"></div>';
 
-            // Busca a listagem básica do rclone serve http
-            fetch(url).then(r => r.text()).then(html => {
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(html, 'text/html');
-                const links = Array.from(doc.querySelectorAll('a'));
+            const response = await fetchAPI(`/api/nuvem/browser?remoto=${currentRemoto}&path=${encodeURIComponent(currentCloudPath)}`);
+            if (response.error) {
+                alert("Erro ao ler nuvem: " + response.error);
+                desconectarNuvem();
+                return;
+            }
 
-                filesDiv.innerHTML = '';
-                links.forEach(link => {
-                    const nome = link.innerText;
-                    if (nome === '../' || nome.endsWith('/')) return; // Pula pastas por enquanto
+            filesDiv.innerHTML = '';
 
-                    const isFolder = nome.endsWith('/');
-                    const item = document.createElement('div');
-                    item.style = "background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px; cursor: pointer; transition: 0.2s; border: 1px solid transparent;";
-                    item.innerText = `📄 ${nome}`;
-                    item.onclick = () => reproduzirVideoNuvem(url + link.getAttribute('href'));
-                    item.onmouseover = () => { item.style.background = "rgba(255,255,255,0.1)"; item.style.borderColor = "var(--glass-border)"; };
-                    item.onmouseout = () => { item.style.background = "rgba(255,255,255,0.05)"; item.style.borderColor = "transparent"; };
-                    filesDiv.appendChild(item);
-                });
+            const header = document.createElement('div');
+            header.className = "list-header";
+            header.innerHTML = `<div class="col-name">Nome</div><div class="col-type">Tipo</div>`;
+            filesDiv.appendChild(header);
 
-                if (filesDiv.innerHTML === '') {
-                    filesDiv.innerHTML = '<div style="color: #94a3b8; text-align: center; margin-top: 10px;">Pasta vazia</div>';
+            if (response.caminho_atual !== "") {
+                const up = document.createElement('div');
+                up.className = "browser-item";
+                up.innerHTML = `<div class="item-icon">${iconFolder}</div> <div class="item-name" style="font-weight: 600;">.. Voltar</div> <div class="item-type">Pasta</div>`;
+                up.onclick = () => navegarArquivosNuvem(response.parent);
+                filesDiv.appendChild(up);
+            }
+
+            response.itens.forEach(item => {
+                const btn = document.createElement('div');
+                btn.className = "browser-item";
+                const icon = item.is_dir ? iconFolder : iconVideo;
+                const typeStr = item.is_dir ? 'Pasta' : 'Vídeo';
+                btn.innerHTML = `<div class="item-icon">${icon}</div> <div class="item-name">${item.nome}</div> <div class="item-type">${typeStr}</div>`;
+                
+                if (item.is_dir) {
+                    btn.onclick = () => navegarArquivosNuvem(item.caminho_relativo);
+                } else {
+                    btn.onclick = () => {
+                        cloudPreviewPlayer.pause();
+                        mostrarPreviewNuvem(item.caminho_relativo, item.nome, true);
+                    };
+                    btn.onmouseenter = () => {
+                        clearTimeout(hoverTimeout);
+                        hoverTimeout = setTimeout(() => mostrarPreviewNuvem(item.caminho_relativo, item.nome, false), 600);
+                    };
+                    btn.onmouseleave = () => {
+                        clearTimeout(hoverTimeout);
+                    };
                 }
-            }).catch(e => {
-                filesDiv.innerHTML = `<div style="color: #ef4444; text-align: center;">Erro ao carregar diretório.</div>`;
+                filesDiv.appendChild(btn);
             });
+
+            if (response.itens.length === 0) {
+                const empty = document.createElement('div');
+                empty.style = "color: #475569; text-align: center; margin-top: 20px; font-size: 0.9rem;";
+                empty.innerText = "Pasta Vazia";
+                filesDiv.appendChild(empty);
+            }
         }
+        
+        async function mostrarPreviewNuvem(caminho, nome, playFull = false) {
+            document.getElementById('cloud-preview-placeholder').style.display = 'none';
+            document.getElementById('cloud-preview-content').style.display = 'none';
+            document.getElementById('cloud-preview-loading').style.display = 'flex';
+            
+            const cloudPreviewPlayer = document.getElementById('cloud-preview-player');
+            cloudPreviewPlayer.pause();
 
-        function voltarPastaNuvem() {
-            if (currentCloudPath === '/' || currentCloudPath === '') return;
+            // Formata URL integrando Rclone VFS com HTTP local
+            let safePath = caminho.replace(/^\/+/, '');
+            const fullPath = window.baseCloudUrl + safePath;
+            
+            const response = await fetchAPI('/api/preparar', 'POST', { caminho: fullPath });
+            
+            document.getElementById('cloud-preview-loading').style.display = 'none';
+            
+            if (response.success) {
+                document.getElementById('cloud-preview-content').style.display = 'block';
+                document.getElementById('cloud-preview-title').innerText = response.nome || nome;
+                
+                cloudPreviewPlayer.src = response.url;
+                cloudPreviewPlayer.play().catch(e => console.log("Autoplay preview impedido:", e));
+                
+                const btnPlay = document.getElementById('btn-play-cloud-preview');
+                btnPlay.onclick = () => {
+                    cloudPreviewPlayer.pause();
+                    reproduzirVideo(response.url);
+                };
 
-            let parts = currentCloudPath.split('/').filter(p => p !== '');
-            parts.pop(); // Remove a última pasta
-
-            let newPath = '/' + parts.join('/');
-            if (newPath !== '/') newPath += '/';
-
-            navegarArquivosNuvem(newPath);
-        }
-
-        function reproduzirVideoNuvem(url) {
-            document.getElementById('cloud-view').style.display = 'none';
-            document.getElementById('tabs-nav').style.display = 'none';
-
-            // Agora redirecionamos o URL para a nossa API interceptar!
-            carregarVideoLocal(url);
+                if (playFull) {
+                    cloudPreviewPlayer.pause();
+                    reproduzirVideo(response.url);
+                }
+            } else {
+                document.getElementById('cloud-preview-placeholder').style.display = 'block';
+                document.getElementById('cloud-preview-placeholder').innerText = "Erro: " + response.error;
+            }
         }
 
         async function desconectarNuvem() {
-            await fetchAPI('/api/nuvem/desconectar', 'POST');
+            currentRemoto = "";
             document.getElementById('cloud-browser').style.display = 'none';
-            document.getElementById('cloud-remotes').style.display = 'flex';
+            document.getElementById('cloud-status').style.display = 'block';
             carregarNuvem();
-        }
-
-        async function carregarHistorico() {
-            const historico = await fetchAPI('/api/historico');
-            const container = document.getElementById('historico-container');
-            const lista = document.getElementById('lista-historico');
-
-            if (historico && !historico.error && historico.length > 0) {
-                container.style.display = 'block';
-                lista.innerHTML = '';
-                historico.forEach(item => {
-                    const btn = document.createElement('div');
-                    btn.style = "background: rgba(255,255,255,0.05); padding: 10px 15px; border-radius: 10px; cursor: pointer; text-align: left; transition: 0.2s; border: 1px solid transparent; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.9rem;";
-                    btn.innerHTML = `🎥 ${item.nome}`;
-                    btn.onmouseover = () => { btn.style.background = "rgba(255,255,255,0.1)"; btn.style.borderColor = "var(--glass-border)"; };
-                    btn.onmouseout = () => { btn.style.background = "rgba(255,255,255,0.05)"; btn.style.borderColor = "transparent"; };
-                    btn.onclick = () => carregarVideoLocal(item.caminho);
-                    lista.appendChild(btn);
-                });
-            } else {
-                container.style.display = 'none';
-            }
-        }
-
-        async function carregarVideoLocal(caminho) {
-            document.getElementById('select-view').style.display = 'none';
-            document.getElementById('local-browser-view').style.display = 'none';
-
-            document.getElementById('loading-view').style.display = 'block';
-            document.getElementById('loading-text').innerText = 'Acessando e protegendo arquivo...';
-
-            const response = await fetchAPI('/api/preparar', 'POST', { caminho });
-            if (response.success) {
-                document.getElementById('loading-view').style.display = 'none';
-                reproduzirVideo(response.url);
-            } else {
-                alert("Erro ao abrir vídeo: " + response.error);
-                voltar();
-            }
-        }
-
-        function abrirNavegadorLocal() {
-            document.getElementById('select-view').style.display = 'none';
-            document.getElementById('local-browser-view').style.display = 'block';
-            navegarPastaLocal("");
         }
 
         async function navegarPastaLocal(caminho) {
             const filesDiv = document.getElementById('local-files');
-            filesDiv.innerHTML = '<div class="spinner"></div>';
+            filesDiv.innerHTML = '<div class="spinner" style="margin-top: 20px;"></div>';
+            
+            // Limpa o preview
+            document.getElementById('preview-placeholder').style.display = 'block';
+            document.getElementById('preview-content').style.display = 'none';
+            document.getElementById('preview-loading').style.display = 'none';
+            const previewPlayer = document.getElementById('preview-player');
+            previewPlayer.pause();
+            previewPlayer.removeAttribute('src');
+            previewPlayer.load();
 
             const response = await fetchAPI(`/api/browser?path=${encodeURIComponent(caminho)}`);
             if (response.error) {
                 alert("Erro: " + response.error);
-                mostrarSelector();
                 return;
             }
 
-            document.getElementById('local-path').innerText = response.caminho_atual || "Raiz do Sistema";
+            renderBreadcrumb('local-path', response.caminho_atual || "", false, navegarPastaLocal);
             filesDiv.innerHTML = '';
+
+            const header = document.createElement('div');
+            header.className = "list-header";
+            header.innerHTML = `<div class="col-name">Nome</div><div class="col-type">Tipo</div>`;
+            filesDiv.appendChild(header);
 
             if (response.caminho_atual !== "") {
                 const up = document.createElement('div');
-                up.style = "background: rgba(255,255,255,0.1); padding: 10px; border-radius: 8px; cursor: pointer; font-weight: bold; margin-bottom: 5px;";
-                up.innerText = "📁 .. (Subir / Voltar)";
+                up.className = "browser-item";
+                up.innerHTML = `<div class="item-icon">${iconFolder}</div> <div class="item-name" style="font-weight: 600;">.. Voltar</div> <div class="item-type">Pasta</div>`;
                 up.onclick = () => navegarPastaLocal(response.parent);
                 filesDiv.appendChild(up);
             }
 
             response.itens.forEach(item => {
                 const btn = document.createElement('div');
-                btn.style = "background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px; cursor: pointer; transition: 0.2s; border: 1px solid transparent; text-align: left;";
-                btn.innerText = (item.is_dir ? "📁 " : "📄 ") + item.nome;
-                btn.onmouseover = () => { btn.style.background = "rgba(255,255,255,0.1)"; btn.style.borderColor = "var(--glass-border)"; };
-                btn.onmouseout = () => { btn.style.background = "rgba(255,255,255,0.05)"; btn.style.borderColor = "transparent"; };
+                btn.className = "browser-item";
+                const icon = item.is_dir ? iconFolder : iconVideo;
+                const typeStr = item.is_dir ? 'Pasta' : 'Vídeo';
+                btn.innerHTML = `<div class="item-icon">${icon}</div> <div class="item-name">${item.nome}</div> <div class="item-type">${typeStr}</div>`;
 
                 if (item.is_dir) {
                     btn.onclick = () => navegarPastaLocal(item.caminho);
                 } else {
-                    btn.onclick = () => carregarVideoLocal(item.caminho);
+                    btn.onclick = () => mostrarPreview(item, true);
+                    btn.onmouseenter = () => {
+                        clearTimeout(hoverTimeout);
+                        hoverTimeout = setTimeout(() => mostrarPreview(item, false), 600);
+                    };
+                    btn.onmouseleave = () => {
+                        clearTimeout(hoverTimeout);
+                    };
                 }
                 filesDiv.appendChild(btn);
             });
+
+            if (response.itens.length === 0) {
+                const empty = document.createElement('div');
+                empty.style = "color: #475569; text-align: center; margin-top: 20px; font-size: 0.9rem;";
+                empty.innerText = "Pasta Vazia";
+                filesDiv.appendChild(empty);
+            }
+        }
+        
+        async function mostrarPreview(item, playFull = false) {
+            document.getElementById('preview-placeholder').style.display = 'none';
+            document.getElementById('preview-content').style.display = 'none';
+            document.getElementById('preview-loading').style.display = 'flex';
+            
+            const previewPlayer = document.getElementById('preview-player');
+            previewPlayer.pause();
+
+            const response = await fetchAPI('/api/preparar', 'POST', { caminho: item.caminho });
+            
+            document.getElementById('preview-loading').style.display = 'none';
+            
+            if (response.success) {
+                document.getElementById('preview-content').style.display = 'block';
+                document.getElementById('preview-title').innerText = response.nome || item.nome;
+                
+                previewPlayer.src = response.url;
+                previewPlayer.play().catch(e => console.log("Autoplay preview impedido:", e));
+                
+                const btnPlay = document.getElementById('btn-play-preview');
+                btnPlay.onclick = () => {
+                    previewPlayer.pause();
+                    reproduzirVideo(response.url);
+                };
+
+                if (playFull) {
+                    previewPlayer.pause();
+                    reproduzirVideo(response.url);
+                }
+            } else {
+                document.getElementById('preview-placeholder').style.display = 'block';
+                document.getElementById('preview-placeholder').innerText = "Erro: " + response.error;
+            }
         }
 
         function reproduzirVideo(url) {
-            document.getElementById('select-view').style.display = 'none';
             document.getElementById('local-browser-view').style.display = 'none';
+            document.getElementById('cloud-view').style.display = 'none';
             document.getElementById('loading-view').style.display = 'none';
+            document.getElementById('tabs-nav').style.display = 'none';
             document.getElementById('player-view').style.display = 'flex';
 
             const player = document.getElementById('main-player');
@@ -626,8 +1403,316 @@
 
             document.getElementById('player-view').style.display = 'none';
             document.getElementById('loading-view').style.display = 'none';
-            mostrarSelector();
+            document.getElementById('tabs-nav').style.display = 'flex';
+            
+            if (currentRemoto) {
+                mudarAba('nuvem');
+            } else {
+                mudarAba('local');
+            }
         }
+
+        // ===================== WIZARD RCLONE =====================
+        const wizard = (() => {
+            let _provedores = [];
+            let _provedorSelecionado = null;
+            let _nomeRemotoBase = null;
+            let _oauthToken = null;
+            let _oauthPollInterval = null;
+            let _tipoArmazenamento = null; // 'nuvem' | 'local'
+            const TOTAL_PASSOS = 3;
+
+            function _mostrarSoPasso(id) {
+                ['wizard-passo-1','wizard-passo-2-oauth','wizard-passo-2-campos',
+                 'wizard-passo-2-local','wizard-passo-3','wizard-passo-4']
+                    .forEach(p => document.getElementById(p).style.display = 'none');
+                document.getElementById(id).style.display = 'block';
+            }
+
+            function _atualizarDots(passoAtivo) {
+                const dotsEl = document.getElementById('wizard-dots');
+                dotsEl.innerHTML = '';
+                for (let i = 1; i <= TOTAL_PASSOS; i++) {
+                    const d = document.createElement('div');
+                    d.className = 'wizard-dot' + (i === passoAtivo ? ' active' : (i < passoAtivo ? ' done' : ''));
+                    dotsEl.appendChild(d);
+                }
+            }
+
+            function _mostrarErro(id, msg) {
+                const el = document.getElementById(id);
+                el.innerText = msg;
+                el.style.display = 'block';
+            }
+
+            function _ocultarErro(id) {
+                document.getElementById(id).style.display = 'none';
+            }
+
+            async function init() {
+                _tipoArmazenamento = null;
+                _provedorSelecionado = null;
+                _nomeRemotoBase = null;
+                // Busca provedores em background (sem bloquear a UI)
+                fetchAPI('/api/nuvem/provedores').then(p => { _provedores = p || []; });
+                // Mostra a tela de tipo
+                _mostrarSoPasso('wizard-passo-1');
+                document.getElementById('wizard-tipo-escolha').style.display = 'block';
+                document.getElementById('wizard-provider-escolha').style.display = 'none';
+                _atualizarDots(1);
+            }
+
+            function voltarParaTipo() {
+                cancelarOAuth();
+                _provedorSelecionado = null;
+                _nomeRemotoBase = null;
+                _mostrarSoPasso('wizard-passo-1');
+                document.getElementById('wizard-tipo-escolha').style.display = 'block';
+                document.getElementById('wizard-provider-escolha').style.display = 'none';
+                _atualizarDots(1);
+            }
+
+            function escolherNuvem() {
+                _tipoArmazenamento = 'nuvem';
+                // Renderiza cards dos provedores em nuvem (exclui local_only)
+                const grid = document.getElementById('wizard-provedor-grid');
+                grid.innerHTML = '';
+                (_provedores || []).filter(p => !p.local_only).forEach(p => {
+                    const card = document.createElement('div');
+                    card.className = 'provedor-card';
+                    card.innerHTML = `<div class="prov-icon" style="background:${p.cor};">${p.icone}</div>
+                                      <div class="prov-nome">${p.nome}</div>`;
+                    card.onclick = () => selecionarProvedor(p);
+                    grid.appendChild(card);
+                });
+                document.getElementById('wizard-tipo-escolha').style.display = 'none';
+                document.getElementById('wizard-provider-escolha').style.display = 'block';
+            }
+
+            function escolherLocal() {
+                _tipoArmazenamento = 'local';
+                _provedorSelecionado = { local_only: true };
+                _ocultarErro('wizard-local-erro');
+                document.getElementById('wizard-local-path').value = '';
+                _mostrarSoPasso('wizard-passo-2-local');
+                _atualizarDots(2);
+            }
+
+            function confirmarLocal() {
+                const caminho = document.getElementById('wizard-local-path').value.trim();
+                if (!caminho) {
+                    _mostrarErro('wizard-local-erro', 'Informe o caminho da pasta.');
+                    return;
+                }
+                _nomeRemotoBase = caminho;
+                _irParaPasso3();
+            }
+
+            async function selecionarProvedor(p) {
+                _provedorSelecionado = p;
+                _nomeRemotoBase = null;
+                _oauthToken = null;
+
+                if (p.oauth) {
+                    _mostrarSoPasso('wizard-passo-2-oauth');
+                    _atualizarDots(2);
+                    document.getElementById('wizard-oauth-titulo').innerText = `Autorizar ${p.nome}`;
+                    document.getElementById('wizard-oauth-status').innerText = 'Iniciando autenticação, aguarde...';
+                    document.getElementById('wizard-oauth-link').style.display = 'none';
+                    _ocultarErro('wizard-oauth-erro');
+
+                    const res = await fetchAPI(`/api/nuvem/auth-url?tipo=${p.id}`);
+                    if (res.url) {
+                        const linkEl = document.getElementById('wizard-oauth-link');
+                        linkEl.href = res.url;
+                        linkEl.style.display = 'block';
+                        document.getElementById('wizard-oauth-status').innerText = 'Aguardando você autorizar no navegador...';
+                    }
+
+                    _oauthPollInterval = setInterval(async () => {
+                        const s = await fetchAPI('/api/nuvem/auth-status');
+                        if (s && s.concluido) {
+                            clearInterval(_oauthPollInterval);
+                            _oauthToken = s.token;
+                            const nomeBase = `_base_${p.id}_${Date.now()}`;
+                            const cr = await fetchAPI('/api/nuvem/criar-remoto', 'POST', {
+                                nome: nomeBase, tipo: p.id, params: { token: _oauthToken }
+                            });
+                            if (cr.success) {
+                                _nomeRemotoBase = nomeBase + ':';
+                                _irParaPasso3();
+                            } else {
+                                _mostrarErro('wizard-oauth-erro', 'Erro ao salvar configuração: ' + cr.message);
+                            }
+                        }
+                    }, 2000);
+                    return;
+                }
+
+                // S3 e similares: campos manuais
+                _mostrarSoPasso('wizard-passo-2-campos');
+                _atualizarDots(2);
+                document.getElementById('wizard-campos-titulo').innerText = `Configurar ${p.nome}`;
+                document.getElementById('wizard-campos-sub').innerText = 'Preencha os dados de acesso:';
+                _renderizarCampos(p.campos);
+                _ocultarErro('wizard-campos-erro');
+            }
+
+            function _renderizarCampos(campos) {
+                const form = document.getElementById('wizard-campos-form');
+                form.innerHTML = '';
+                campos.forEach(c => {
+                    const lbl = document.createElement('label');
+                    lbl.className = 'wizard-label';
+                    lbl.innerText = c.label + (c.required ? ' *' : '');
+                    const inp = document.createElement('input');
+                    inp.className = 'wizard-input';
+                    inp.type = c.tipo === 'password' ? 'password' : 'text';
+                    inp.id = `wizard-campo-${c.id}`;
+                    inp.placeholder = c.required ? 'Obrigatório' : 'Opcional';
+                    form.appendChild(lbl);
+                    form.appendChild(inp);
+                });
+            }
+
+            async function confirmarCampos() {
+                _ocultarErro('wizard-campos-erro');
+                const p = _provedorSelecionado;
+                const params = {};
+                for (const c of p.campos) {
+                    const val = document.getElementById(`wizard-campo-${c.id}`).value.trim();
+                    if (c.required && !val) {
+                        _mostrarErro('wizard-campos-erro', `O campo "${c.label}" é obrigatório.`);
+                        return;
+                    }
+                    params[c.id] = val;
+                }
+                const btn = document.getElementById('wizard-btn-confirmar-campos');
+                btn.disabled = true;
+                btn.innerHTML = '<div class="spinner" style="width:16px;height:16px;border-width:2px;"></div> Conectando...';
+                const nomeBase = `_base_${p.id}_${Date.now()}`;
+                const cr = await fetchAPI('/api/nuvem/criar-remoto', 'POST', { nome: nomeBase, tipo: p.id, params });
+                btn.disabled = false;
+                btn.innerHTML = 'Continuar →';
+                if (cr.success) {
+                    _nomeRemotoBase = nomeBase + ':';
+                    _irParaPasso3();
+                } else {
+                    _mostrarErro('wizard-campos-erro', 'Erro: ' + cr.message);
+                }
+            }
+
+            function _irParaPasso3() {
+                _mostrarSoPasso('wizard-passo-3');
+                _atualizarDots(3);
+                _ocultarErro('wizard-crypt-erro');
+                document.getElementById('wizard-crypt-nome').value = '';
+                document.getElementById('wizard-crypt-senha').value = '';
+                document.getElementById('wizard-crypt-senha2').value = '';
+                // Campo de subpasta: visível só para nuvem
+                const subpastaRow = document.getElementById('wizard-subpasta-row');
+                if (_tipoArmazenamento === 'local') {
+                    subpastaRow.style.display = 'none';
+                } else {
+                    subpastaRow.style.display = 'block';
+                    document.getElementById('wizard-crypt-subpasta').value = 'RuntimeCrypto';
+                }
+            }
+
+            async function criarCrypt() {
+                _ocultarErro('wizard-crypt-erro');
+                const nome = document.getElementById('wizard-crypt-nome').value.trim().replace(/[^a-zA-Z0-9]/g, '');
+                const senha = document.getElementById('wizard-crypt-senha').value;
+                const senha2 = document.getElementById('wizard-crypt-senha2').value;
+
+                if (!nome) { _mostrarErro('wizard-crypt-erro', 'Informe um nome para o drive.'); return; }
+                if (nome.length < 3) { _mostrarErro('wizard-crypt-erro', 'Nome deve ter ao menos 3 caracteres.'); return; }
+                if (!senha) { _mostrarErro('wizard-crypt-erro', 'Informe uma senha.'); return; }
+                if (senha.length < 6) { _mostrarErro('wizard-crypt-erro', 'Senha deve ter ao menos 6 caracteres.'); return; }
+                if (senha !== senha2) { _mostrarErro('wizard-crypt-erro', 'As senhas não coincidem.'); return; }
+
+                let remotoFinal = _nomeRemotoBase;
+                if (_tipoArmazenamento === 'nuvem') {
+                    const subpasta = document.getElementById('wizard-crypt-subpasta').value.trim().replace(/^\/+|\/+$/g, '');
+                    if (!subpasta) { _mostrarErro('wizard-crypt-erro', 'Informe a pasta do drive.'); return; }
+                    const base = _nomeRemotoBase.endsWith(':') ? _nomeRemotoBase : _nomeRemotoBase + ':';
+                    remotoFinal = base + subpasta;
+                }
+
+                const btn = document.getElementById('wizard-btn-criar-crypt');
+                btn.disabled = true;
+                btn.innerHTML = '<div class="spinner" style="width:16px;height:16px;border-width:2px;"></div> Criando cofre...';
+
+                const res = await fetchAPI('/api/nuvem/criar-crypt', 'POST', {
+                    nome, remoto_base: remotoFinal, senha, senha2
+                });
+
+                btn.disabled = false;
+                btn.innerHTML = 'Criar Cofre Criptografado';
+
+                if (res.success) {
+                    const localInfo = _tipoArmazenamento === 'local'
+                        ? `📁 Pasta local: ${_nomeRemotoBase}`
+                        : `☁️ Drive remoto: ${remotoFinal}`;
+                    document.getElementById('wizard-sucesso-msg').innerText =
+                        `O drive "${nome}:" foi criado com sucesso!\n${localInfo}`;
+                    _mostrarSoPasso('wizard-passo-4');
+                    document.getElementById('wizard-dots').innerHTML = '';
+                } else {
+                    _mostrarErro('wizard-crypt-erro', 'Erro ao criar cofre: ' + res.message);
+                }
+            }
+
+            function voltarPasso1() {
+                cancelarOAuth();
+                _mostrarSoPasso('wizard-passo-1');
+                if (_tipoArmazenamento === 'nuvem') {
+                    document.getElementById('wizard-tipo-escolha').style.display = 'none';
+                    document.getElementById('wizard-provider-escolha').style.display = 'block';
+                } else {
+                    document.getElementById('wizard-tipo-escolha').style.display = 'block';
+                    document.getElementById('wizard-provider-escolha').style.display = 'none';
+                }
+                _atualizarDots(1);
+            }
+
+            function voltarPasso2() {
+                if (_tipoArmazenamento === 'local') {
+                    _mostrarSoPasso('wizard-passo-2-local');
+                } else if (_provedorSelecionado && _provedorSelecionado.oauth) {
+                    _mostrarSoPasso('wizard-passo-2-oauth');
+                } else {
+                    _mostrarSoPasso('wizard-passo-2-campos');
+                }
+                _atualizarDots(2);
+            }
+
+            function finalizar() {
+                fecharWizard();
+                mudarAba('nuvem');
+            }
+
+            return { init, escolherNuvem, escolherLocal, voltarParaTipo, confirmarLocal,
+                     selecionarProvedor, confirmarCampos, criarCrypt, voltarPasso1, voltarPasso2, finalizar };
+        })();
+
+        function abrirWizard() {
+            document.getElementById('cloud-view').style.display = 'none';
+            document.getElementById('wizard-view').style.display = 'block';
+            wizard.init();
+        }
+
+        function fecharWizard() {
+            cancelarOAuth();
+            document.getElementById('wizard-view').style.display = 'none';
+            document.getElementById('cloud-view').style.display = 'block';
+            carregarNuvem();
+        }
+
+        function cancelarOAuth() {
+            fetchAPI('/api/nuvem/auth-abort', 'POST');
+        }
+        // ===================== FIM WIZARD =====================
     </script>
 </body>
 
