@@ -22,6 +22,7 @@ nuvem = GerenciadorRClone()
 async def ciclo_vida(app: FastAPI):
     yield
     gerenciador.encerrar()
+    nuvem.desmontar_todas()
     nuvem.parar_servidor()
 
 app = FastAPI(title="Quantum Runtime API", lifespan=ciclo_vida)
@@ -46,6 +47,22 @@ class CriarCryptModel(BaseModel):
     remoto_base: str
     senha: str
     senha2: str = ""
+
+class MontarModel(BaseModel):
+    remoto: str
+    letra: str = ""
+
+class DesmontarModel(BaseModel):
+    letra: str
+
+class ImportarCryptModel(BaseModel):
+    nome: str
+    remoto_base: str
+    senha: str
+    senha2: str = ""
+
+class RemoverRemotoModel(BaseModel):
+    nome: str
 
 # --- HISTORICO ---
 def _carregar_historico():
@@ -104,6 +121,56 @@ def abrir_cofre(dados: SenhaModel):
         return {"success": True}
     except Exception as e:
         return {"success": False, "error": "Senha inválida."}
+
+# --- MONTAGEM DE UNIDADE VIRTUAL (CORE) ---
+@app.get("/api/nuvem/winfsp-status")
+def winfsp_status():
+    return nuvem.verificar_winfsp()
+
+@app.get("/api/nuvem/letras-disponiveis")
+def letras_disponiveis():
+    return {"letras": nuvem.obter_letras_disponiveis()}
+
+@app.get("/api/nuvem/montagem/status")
+def montagem_status():
+    return {"montagens": nuvem.status_montagem()}
+
+@app.post("/api/nuvem/montagem/montar")
+async def montar_unidade(dados: MontarModel):
+    from fastapi.concurrency import run_in_threadpool
+    sucesso, msg, letra = await run_in_threadpool(
+        nuvem.montar_unidade, dados.remoto, dados.letra or None
+    )
+    return {"success": sucesso, "message": msg, "letra": letra}
+
+@app.post("/api/nuvem/montagem/desmontar")
+async def desmontar_unidade(dados: DesmontarModel):
+    from fastapi.concurrency import run_in_threadpool
+    sucesso, msg = await run_in_threadpool(nuvem.desmontar_unidade, dados.letra)
+    return {"success": sucesso, "message": msg}
+
+@app.get("/api/nuvem/remotos-detalhado")
+def remotos_detalhado():
+    return {"remotos": nuvem.listar_remotos_detalhado()}
+
+@app.post("/api/nuvem/importar-crypt")
+async def importar_crypt(dados: ImportarCryptModel):
+    from fastapi.concurrency import run_in_threadpool
+    sucesso, msg = await run_in_threadpool(
+        nuvem.importar_crypt, dados.nome, dados.remoto_base, dados.senha, dados.senha2
+    )
+    return {"success": sucesso, "message": msg}
+
+@app.post("/api/nuvem/remover-remoto")
+def remover_remoto(dados: RemoverRemotoModel):
+    # Primeiro desmonta se estiver montado
+    montagens = nuvem.status_montagem()
+    nome_limpo = dados.nome.rstrip(":")
+    for m in montagens:
+        if m["remoto"].rstrip(":") == nome_limpo:
+            nuvem.desmontar_unidade(m["letra"])
+    sucesso, msg = nuvem.remover_remoto(dados.nome)
+    return {"success": sucesso, "message": msg}
 
 # --- BROWSER / ARQUIVOS ---
 def get_drives_windows():

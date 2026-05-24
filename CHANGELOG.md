@@ -2,6 +2,49 @@
 
 Todas as modificações notáveis neste projeto serão documentadas neste arquivo.
 
+## [Não Lançado] - 2026-05-24
+
+### Adicionado — Montagem Nativa de Unidade Virtual (Estilo Cryptomator)
+- **`rclone mount` nativo para Windows:** O programa agora monta drives crypt como unidades virtuais do Windows (ex: `V:\`, `W:\`), acessíveis diretamente pelo Windows Explorer, sem necessidade de streaming HTTP.
+- **Detecção automática de WinFsp:** Verifica se o driver WinFsp está instalado (DLL no System32, registro do Windows, ou Program Files). Exibe alerta com link de download caso ausente.
+- **Gestão inteligente de letras de unidade:** Seleciona automaticamente a primeira letra livre (V→Z, depois R→Q). Permite seleção manual via dropdown na UI.
+- **Montagem automática:** Ao criar um crypt pelo wizard, opção de "Montar como Unidade e Finalizar" monta imediatamente.
+- **Desmontagem automática no shutdown:** `ciclo_vida` do FastAPI desmonta todas as unidades ao encerrar.
+- **Badge de montagem ativa:** Indicador visual animado (pulse glow) na barra de título mostrando unidades montadas (ex: `V: Montado`).
+- **Polling de status:** Verificação periódica (10s) do estado das montagens ativas.
+
+### Adicionado — Importação de Crypt Existente
+- **Tela "Importar Crypt Existente":** Formulário dedicado para conectar a um drive crypt já configurado em outro provedor, informando nome, remoto base e senha.
+- **Novo endpoint `POST /api/nuvem/importar-crypt`:** Cria configuração crypt local a partir de dados de um crypt existente.
+
+### Adicionado — Novos Endpoints REST
+- `GET /api/nuvem/winfsp-status` — Verifica se WinFsp está instalado no sistema.
+- `GET /api/nuvem/montagem/status` — Retorna todas as montagens ativas com letra, remoto e ponto de montagem.
+- `POST /api/nuvem/montagem/montar` — Monta um remoto crypt como unidade virtual. Aceita `{remoto, letra?}`.
+- `POST /api/nuvem/montagem/desmontar` — Desmonta uma unidade ativa. Aceita `{letra}`.
+- `GET /api/nuvem/letras-disponiveis` — Lista letras de unidade disponíveis no Windows.
+- `GET /api/nuvem/remotos-detalhado` — Lista todos os remotos com tipo, config, status de montagem e letra.
+- `POST /api/nuvem/remover-remoto` — Remove um remoto da configuração do RClone (desmonta automaticamente se montado).
+
+### Adicionado — Novos Métodos em `GerenciadorRClone`
+- `verificar_winfsp()`, `obter_letras_disponiveis()`, `montar_unidade()`, `desmontar_unidade()`, `desmontar_todas()`, `status_montagem()`, `listar_remotos_detalhado()`, `obter_config_remoto()`, `importar_crypt()`, `remover_remoto()`.
+
+### Modificado — Redesign da Interface (Foco em Gerenciamento de Drives)
+- **Aba DRIVES como tela principal:** Dashboard com cards de todos os drives configurados (crypts e bases), botões de montar/desmontar, seletor de letra, badge de tipo e status.
+- **Tabs reordenadas:** `DRIVES | LOCAL | STREAMING` — o streaming de vídeo agora é um recurso secundário.
+- **Cards de drive interativos:** Mostra tipo (crypt/base), remoto base, status de montagem, com ações contextuais.
+- **Alerta visual de WinFsp ausente:** Card amarelo com link direto para download.
+- **Estado vazio refinado:** Ícone de cadeado e texto guia quando não há drives.
+- **Wizard atualizado:** Passo 4 (sucesso) agora oferece "Montar como Unidade e Finalizar" com montagem imediata.
+- **CSS unificado:** Classes reutilizáveis (`.btn`, `.panel`, `.input-field`, `.label`, `.badge`) substituem estilos inline repetidos.
+- **Scrollbar estilizada:** Barra de rolagem dark com cor accent.
+
+### Segurança e Padrões (Mantidos)
+- Chave mestra apenas na RAM. Zero rastros descriptografados em disco.
+- Montagens usam `--vfs-cache-mode full` com cache local temporário e `--network-mode`.
+
+---
+
 ## [Não Lançado] - 2026-04-26
 
 ### Adicionado
