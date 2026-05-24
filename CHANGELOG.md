@@ -4,6 +4,41 @@ Todas as modificações notáveis neste projeto serão documentadas neste arquiv
 
 ## [Não Lançado] - 2026-05-24
 
+### Adicionado — Configurações Avançadas de VFS (Cache/Chunking/Performance)
+- **Painel de Configurações VFS na UI:** Novo painel acessível pelo botão "⚙ Configurações" no Dashboard de Drives. Grid organizado em 3 seções: Cache, Chunking e Leitura, Sincronização.
+- **9 parâmetros configuráveis:** `vfs_cache_mode` (off/minimal/writes/full), `vfs_cache_max_size`, `vfs_cache_max_age`, `vfs_read_chunk_size`, `vfs_read_chunk_size_limit`, `vfs_read_ahead`, `buffer_size`, `dir_cache_time`, `poll_interval`.
+- **Tooltips explicativos:** Cada campo possui ícone `?` com tooltip detalhado sobre o que o parâmetro controla.
+- **Restauração de padrões:** Botão para resetar todas as configurações VFS aos valores padrão otimizados para streaming de vídeo.
+- **Feedback visual:** Botão "Salvar" exibe confirmação `✓ Salvo!` com transição suave.
+- **Valores dinâmicos no backend:** Os valores hardcoded de `montar_unidade()` e `iniciar_servidor_http()` foram substituídos pelo método `_construir_args_vfs()` que monta a CLI do rclone a partir do dicionário de configurações ativo.
+
+### Adicionado — Configurações Avançadas do Crypt (Criptografia de Nomes/Dados)
+- **Seção colapsável "Configurações Avançadas do Crypt"** no Wizard (Passo 3) e na tela de Importação. Animação suave de expand/collapse via CSS `max-height`.
+- **`filename_encryption`:** Select com 3 opções — Standard (criptografia forte), Obfuscate (ofuscação simples), Off (sem criptografia de nomes).
+- **`directory_name_encryption`:** Checkbox para ocultar a estrutura de diretórios no provedor remoto.
+- **`no_data_encryption`:** Checkbox para desabilitar criptografia do conteúdo dos arquivos (apenas no wizard de criação). Exibe aviso vermelho condicional ao ativar.
+- **Checkboxes customizados:** Estilizados com tema verde e marca de seleção `✓` compatível com o design do sistema.
+
+### Adicionado — Novos Endpoints REST
+- `GET /api/nuvem/configuracoes-vfs` — Retorna as configurações VFS ativas da sessão.
+- `POST /api/nuvem/configuracoes-vfs` — Atualiza as configurações VFS (aplicadas nas próximas montagens).
+- `POST /api/nuvem/configuracoes-vfs/restaurar` — Restaura configurações VFS para os valores padrão.
+
+### Adicionado — Novos Métodos em `GerenciadorRClone`
+- `obter_configuracoes_vfs()`, `atualizar_configuracoes_vfs()`, `restaurar_configuracoes_vfs()`, `_construir_args_vfs()`.
+
+### Modificado — Models de API
+- `CriarCryptModel` — Adicionados campos `filename_encryption`, `directory_name_encryption`, `no_data_encryption`.
+- `ImportarCryptModel` — Adicionados campos `filename_encryption`, `directory_name_encryption`.
+- Novo model `ConfigVfsModel` com 9 campos e defaults.
+
+### Modificado — Backend (`rclone_manager.py`)
+- `criar_crypt()` e `importar_crypt()` agora aceitam parâmetro `config_crypt` para configurar criptografia de nomes e dados.
+- `montar_unidade()` e `iniciar_servidor_http()` agora aceitam `config_vfs` e usam `_construir_args_vfs()` em vez de flags hardcoded.
+- Novas constantes `CONFIGURACOES_VFS_PADRAO` e `CONFIGURACOES_CRYPT_PADRAO` com defaults documentados.
+
+---
+
 ### Adicionado — Montagem Nativa de Unidade Virtual (Estilo Cryptomator)
 - **`rclone mount` nativo para Windows:** O programa agora monta drives crypt como unidades virtuais do Windows (ex: `V:\`, `W:\`), acessíveis diretamente pelo Windows Explorer, sem necessidade de streaming HTTP.
 - **Detecção automática de WinFsp:** Verifica se o driver WinFsp está instalado (DLL no System32, registro do Windows, ou Program Files). Exibe alerta com link de download caso ausente.

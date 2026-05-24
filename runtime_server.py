@@ -47,6 +47,9 @@ class CriarCryptModel(BaseModel):
     remoto_base: str
     senha: str
     senha2: str = ""
+    filename_encryption: str = "standard"
+    directory_name_encryption: str = "true"
+    no_data_encryption: str = "false"
 
 class MontarModel(BaseModel):
     remoto: str
@@ -60,9 +63,22 @@ class ImportarCryptModel(BaseModel):
     remoto_base: str
     senha: str
     senha2: str = ""
+    filename_encryption: str = "standard"
+    directory_name_encryption: str = "true"
 
 class RemoverRemotoModel(BaseModel):
     nome: str
+
+class ConfigVfsModel(BaseModel):
+    vfs_cache_mode: str = "full"
+    vfs_cache_max_size: str = "5G"
+    vfs_cache_max_age: str = "1h"
+    vfs_read_chunk_size: str = "64M"
+    vfs_read_chunk_size_limit: str = "2G"
+    vfs_read_ahead: str = "128M"
+    buffer_size: str = "32M"
+    dir_cache_time: str = "5m"
+    poll_interval: str = "15s"
 
 # --- HISTORICO ---
 def _carregar_historico():
@@ -156,8 +172,12 @@ def remotos_detalhado():
 @app.post("/api/nuvem/importar-crypt")
 async def importar_crypt(dados: ImportarCryptModel):
     from fastapi.concurrency import run_in_threadpool
+    config_crypt = {
+        "filename_encryption": dados.filename_encryption,
+        "directory_name_encryption": dados.directory_name_encryption,
+    }
     sucesso, msg = await run_in_threadpool(
-        nuvem.importar_crypt, dados.nome, dados.remoto_base, dados.senha, dados.senha2
+        nuvem.importar_crypt, dados.nome, dados.remoto_base, dados.senha, dados.senha2, config_crypt
     )
     return {"success": sucesso, "message": msg}
 
@@ -334,8 +354,28 @@ def criar_remoto_api(dados: CriarRemotoModel):
 
 @app.post("/api/nuvem/criar-crypt")
 def criar_crypt_api(dados: CriarCryptModel):
-    sucesso, msg = nuvem.criar_crypt(dados.nome, dados.remoto_base, dados.senha, dados.senha2)
+    config_crypt = {
+        "filename_encryption": dados.filename_encryption,
+        "directory_name_encryption": dados.directory_name_encryption,
+        "no_data_encryption": dados.no_data_encryption,
+    }
+    sucesso, msg = nuvem.criar_crypt(dados.nome, dados.remoto_base, dados.senha, dados.senha2, config_crypt)
     return {"success": sucesso, "message": msg}
+
+@app.get("/api/nuvem/configuracoes-vfs")
+def obter_config_vfs():
+    return nuvem.obter_configuracoes_vfs()
+
+@app.post("/api/nuvem/configuracoes-vfs")
+def atualizar_config_vfs(dados: ConfigVfsModel):
+    config = dados.model_dump()
+    resultado = nuvem.atualizar_configuracoes_vfs(config)
+    return {"success": True, "config": resultado}
+
+@app.post("/api/nuvem/configuracoes-vfs/restaurar")
+def restaurar_config_vfs():
+    resultado = nuvem.restaurar_configuracoes_vfs()
+    return {"success": True, "config": resultado}
 
 @app.get("/api/nuvem/browser")
 def listar_pasta_nuvem(remoto: str, path: str = ""):

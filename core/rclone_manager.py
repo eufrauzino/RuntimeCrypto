@@ -6,6 +6,24 @@ import time
 import json as _json
 import string
 
+CONFIGURACOES_VFS_PADRAO = {
+    "vfs_cache_mode": "full",
+    "vfs_cache_max_size": "5G",
+    "vfs_cache_max_age": "1h",
+    "vfs_read_chunk_size": "64M",
+    "vfs_read_chunk_size_limit": "2G",
+    "vfs_read_ahead": "128M",
+    "buffer_size": "32M",
+    "dir_cache_time": "5m",
+    "poll_interval": "15s",
+}
+
+CONFIGURACOES_CRYPT_PADRAO = {
+    "filename_encryption": "standard",
+    "directory_name_encryption": "true",
+    "no_data_encryption": "false",
+}
+
 PROVEDORES = [
     {
         "id": "drive", "nome": "Google Drive", "icone": "G",
@@ -54,6 +72,8 @@ class GerenciadorRClone:
         # Montagem de unidade virtual
         self._montagens = {}  # {letra: {"processo": Popen, "remoto": str}}
         self._montagem_lock = threading.Lock()
+        # Configurações VFS ativas (sobrecarregáveis via API)
+        self._config_vfs = dict(CONFIGURACOES_VFS_PADRAO)
 
     def _localizar_rclone(self):
         for caminho in ["rclone.exe", "rclone", "./rclone.exe"]:
@@ -145,9 +165,52 @@ class GerenciadorRClone:
         disponiveis = [l for l in _LETRAS_PREFERIDAS if l not in ocupadas]
         return disponiveis
 
+    # ==================== CONFIGURAÇÕES VFS ====================
+
+    def obter_configuracoes_vfs(self):
+        """Retorna as configurações VFS ativas."""
+        return dict(self._config_vfs)
+
+    def atualizar_configuracoes_vfs(self, config):
+        """Atualiza as configurações VFS para montagens/serviços futuros."""
+        chaves_validas = set(CONFIGURACOES_VFS_PADRAO.keys())
+        for chave, valor in config.items():
+            if chave in chaves_validas and valor:
+                self._config_vfs[chave] = str(valor)
+        return self._config_vfs
+
+    def restaurar_configuracoes_vfs(self):
+        """Restaura as configurações VFS para os valores padrão."""
+        self._config_vfs = dict(CONFIGURACOES_VFS_PADRAO)
+        return self._config_vfs
+
+    def _construir_args_vfs(self, config_override=None):
+        """Constrói a lista de argumentos de linha de comando VFS."""
+        cfg = dict(self._config_vfs)
+        if config_override:
+            cfg.update({k: v for k, v in config_override.items() if v})
+
+        mapa_args = {
+            "vfs_cache_mode": "--vfs-cache-mode",
+            "vfs_cache_max_size": "--vfs-cache-max-size",
+            "vfs_cache_max_age": "--vfs-cache-max-age",
+            "vfs_read_chunk_size": "--vfs-read-chunk-size",
+            "vfs_read_chunk_size_limit": "--vfs-read-chunk-size-limit",
+            "vfs_read_ahead": "--vfs-read-ahead",
+            "buffer_size": "--buffer-size",
+            "dir_cache_time": "--dir-cache-time",
+            "poll_interval": "--poll-interval",
+        }
+        args = []
+        for chave, flag in mapa_args.items():
+            valor = cfg.get(chave)
+            if valor:
+                args.extend([flag, valor])
+        return args
+
     # ==================== MONTAGEM DE UNIDADE ====================
 
-    def montar_unidade(self, remoto, letra=None):
+    def montar_unidade(self, remoto, letra=None, config_vfs=None):
         """Monta um remoto RClone como unidade virtual no Windows."""
         if not self.esta_disponivel():
             return False, "RClone não disponível.", None
@@ -177,11 +240,7 @@ class GerenciadorRClone:
         ponto_montagem = f"{letra}:"
         comando = [
             self.executavel, "mount", remoto, ponto_montagem,
-            "--vfs-cache-mode", "full",
-            "--vfs-read-ahead", "128M",
-            "--vfs-cache-max-size", "5G",
-            "--dir-cache-time", "5m",
-            "--poll-interval", "15s",
+        ] + self._construir_args_vfs(config_vfs) + [
             "--volname", f"RClone ({remoto.rstrip(':')})",
             "--network-mode",
         ]
@@ -359,20 +418,26 @@ class GerenciadorRClone:
 
     # ==================== IMPORTAR CRYPT EXISTENTE ====================
 
-    def importar_crypt(self, nome, remoto_base, senha, senha2=""):
+    def importar_crypt(self, nome, remoto_base, senha, senha2="", config_crypt=None):
         """Importa/configura um crypt existente (quando já existe no drive, mas não no rclone local)."""
         if not self.esta_disponivel():
             return False, "RClone não disponível."
         try:
+            cfg = dict(CONFIGURACOES_CRYPT_PADRAO)
+            if config_crypt:
+                cfg.update({k: v for k, v in config_crypt.items() if v})
+
             senha_obs = self.obscurecer_senha(senha)
             senha2_obs = self.obscurecer_senha(senha2) if senha2 else senha_obs
             params = {
                 "remote": remoto_base,
                 "password": senha_obs,
                 "password2": senha2_obs,
-                "filename_encryption": "standard",
-                "directory_name_encryption": "true",
+                "filename_encryption": cfg["filename_encryption"],
+                "directory_name_encryption": cfg["directory_name_encryption"],
             }
+            if cfg.get("no_data_encryption") == "true":
+                params["no_data_encryption"] = "true"
             return self.criar_remoto(nome, "crypt", params)
         except Exception as e:
             return False, str(e)
@@ -403,19 +468,25 @@ class GerenciadorRClone:
         except Exception as e:
             return False, str(e)
 
-    def criar_crypt(self, nome_crypt, remoto_base_ou_caminho, senha, senha2=""):
+    def criar_crypt(self, nome_crypt, remoto_base_ou_caminho, senha, senha2="", config_crypt=None):
         if not self.esta_disponivel():
             return False, "RClone não disponível."
         try:
+            cfg = dict(CONFIGURACOES_CRYPT_PADRAO)
+            if config_crypt:
+                cfg.update({k: v for k, v in config_crypt.items() if v})
+
             senha_obs = self.obscurecer_senha(senha)
             senha2_obs = self.obscurecer_senha(senha2) if senha2 else senha_obs
             params = {
                 "remote": remoto_base_ou_caminho,
                 "password": senha_obs,
                 "password2": senha2_obs,
-                "filename_encryption": "standard",
-                "directory_name_encryption": "true",
+                "filename_encryption": cfg["filename_encryption"],
+                "directory_name_encryption": cfg["directory_name_encryption"],
             }
+            if cfg.get("no_data_encryption") == "true":
+                params["no_data_encryption"] = "true"
             return self.criar_remoto(nome_crypt, "crypt", params)
         except Exception as e:
             return False, str(e)
@@ -512,17 +583,14 @@ class GerenciadorRClone:
 
     # ==================== SERVIDOR HTTP (STREAMING FALLBACK) ====================
 
-    def iniciar_servidor_http(self, remoto):
+    def iniciar_servidor_http(self, remoto, config_vfs=None):
         if self.processo_servico:
             self.parar_servidor()
         comando = [
             self.executavel, "serve", "http", remoto,
             "--addr", f"127.0.0.1:{self.porta_servico}",
             "--read-only",
-            "--vfs-cache-mode", "full",
-            "--vfs-read-ahead", "128M",
-            "--vfs-cache-max-size", "5G",
-        ]
+        ] + self._construir_args_vfs(config_vfs)
         self.processo_servico = subprocess.Popen(
             comando,
             stdout=subprocess.PIPE,

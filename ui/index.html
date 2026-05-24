@@ -551,6 +551,189 @@
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: rgba(16,185,129,0.2); border-radius: 3px; }
         ::-webkit-scrollbar-thumb:hover { background: rgba(16,185,129,0.4); }
+
+        /* ---- PAINEL DE CONFIGURAÇÕES VFS ---- */
+        .config-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px 20px;
+            text-align: left;
+            margin-bottom: 20px;
+        }
+
+        .config-field {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .config-field .label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .config-field .label .config-hint-icon {
+            cursor: help;
+            font-size: 0.7rem;
+            background: rgba(16,185,129,0.15);
+            color: var(--accent);
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            border: 1px solid rgba(16,185,129,0.3);
+        }
+
+        .config-field select {
+            background: rgba(0,0,0,0.4);
+            border: 1px solid var(--glass-border);
+            color: white;
+            padding: 10px 12px;
+            border-radius: 6px;
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.9rem;
+            outline: none;
+            cursor: pointer;
+            transition: border-color 0.3s;
+            appearance: none;
+            -webkit-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2310b981' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            padding-right: 32px;
+        }
+        .config-field select:focus { border-color: var(--accent); }
+
+        .config-section-title {
+            font-size: 0.75rem;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            font-weight: 700;
+            padding: 8px 0 4px;
+            border-bottom: 1px solid rgba(16,185,129,0.15);
+            margin-bottom: 4px;
+            grid-column: span 2;
+        }
+
+        /* ---- SEÇÃO AVANÇADA COLAPSÁVEL ---- */
+        .collapsible-section {
+            border: 1px solid rgba(16,185,129,0.15);
+            border-radius: 8px;
+            margin-top: 16px;
+            overflow: hidden;
+            transition: all 0.3s;
+        }
+
+        .collapsible-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            cursor: pointer;
+            background: rgba(16,185,129,0.04);
+            transition: background 0.2s;
+            user-select: none;
+        }
+        .collapsible-header:hover { background: rgba(16,185,129,0.08); }
+
+        .collapsible-header .collapsible-title {
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .collapsible-arrow {
+            color: #64748b;
+            font-size: 0.75rem;
+            transition: transform 0.3s;
+        }
+
+        .collapsible-section.open .collapsible-arrow {
+            transform: rotate(180deg);
+        }
+
+        .collapsible-body {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.35s ease, padding 0.35s ease;
+            padding: 0 16px;
+        }
+
+        .collapsible-section.open .collapsible-body {
+            max-height: 600px;
+            padding: 14px 16px 18px;
+        }
+
+        .aviso-perigo {
+            background: rgba(239,68,68,0.08);
+            border: 1px solid rgba(239,68,68,0.25);
+            border-radius: 6px;
+            padding: 8px 12px;
+            color: #ef4444;
+            font-size: 0.78rem;
+            margin-top: 6px;
+            display: none;
+        }
+
+        .checkbox-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 6px 0;
+        }
+
+        .checkbox-row input[type="checkbox"] {
+            appearance: none;
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            border: 1px solid var(--glass-border);
+            border-radius: 4px;
+            background: rgba(0,0,0,0.4);
+            cursor: pointer;
+            position: relative;
+            flex-shrink: 0;
+            transition: all 0.2s;
+        }
+
+        .checkbox-row input[type="checkbox"]:checked {
+            background: var(--accent);
+            border-color: var(--accent);
+        }
+
+        .checkbox-row input[type="checkbox"]:checked::after {
+            content: '✓';
+            color: #090e17;
+            font-size: 12px;
+            font-weight: 900;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .checkbox-label {
+            font-size: 0.85rem;
+            color: var(--text-light);
+            cursor: pointer;
+        }
+
+        .checkbox-label .sub {
+            display: block;
+            font-size: 0.75rem;
+            color: #64748b;
+            margin-top: 2px;
+        }
     </style>
 </head>
 
@@ -620,6 +803,7 @@
             <div class="action-bar" id="drives-actions" style="display:none;">
                 <button class="btn" onclick="abrirWizard()">＋ Novo Drive Criptografado</button>
                 <button class="btn secondary" onclick="abrirImportar()">📂 Importar Crypt Existente</button>
+                <button class="btn secondary" onclick="abrirConfiguracoes()">⚙ Configurações</button>
             </div>
 
             <!-- Loading -->
@@ -648,7 +832,31 @@
             <label class="label">Senha 2 (salt) — Opcional</label>
             <input class="input-field" type="password" id="import-senha2" placeholder="Deixe vazio para usar a mesma">
 
-            <button class="btn" id="btn-importar" onclick="executarImportar()" style="width: 100%; margin-top: 4px;">Importar e Verificar</button>
+            <div class="collapsible-section" id="import-avancado">
+                <div class="collapsible-header" onclick="toggleCollapsible('import-avancado')">
+                    <div class="collapsible-title">⚙ Configurações Avançadas do Crypt</div>
+                    <span class="collapsible-arrow">▼</span>
+                </div>
+                <div class="collapsible-body">
+                    <label class="label">Criptografia de nomes de arquivo</label>
+                    <div class="config-field">
+                        <select id="import-filename-enc" class="input-field" style="margin-bottom:8px;background:rgba(0,0,0,0.4);">
+                            <option value="standard">Standard — Criptografia forte (recomendado)</option>
+                            <option value="obfuscate">Obfuscate — Ofuscação simples</option>
+                            <option value="off">Off — Sem criptografia de nomes</option>
+                        </select>
+                    </div>
+                    <div class="checkbox-row">
+                        <input type="checkbox" id="import-dir-enc" checked>
+                        <label class="checkbox-label" for="import-dir-enc">
+                            Criptografar nomes de pastas
+                            <span class="sub">Oculta a estrutura de diretórios no provedor remoto.</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn" id="btn-importar" onclick="executarImportar()" style="width: 100%; margin-top: 14px;">Importar e Verificar</button>
             <button class="btn secondary" onclick="fecharImportar()" style="width: 100%; margin-top: 8px;">← Voltar</button>
         </div>
 
@@ -801,7 +1009,41 @@
                 <label class="label">Confirmar senha *</label>
                 <input class="input-field" type="password" id="wizard-crypt-senha2" placeholder="Digite novamente...">
 
-                <button class="btn" id="wizard-btn-criar-crypt" onclick="wizard.criarCrypt()" style="width:100%;">Criar Cofre Criptografado</button>
+                <div class="collapsible-section" id="wizard-crypt-avancado">
+                    <div class="collapsible-header" onclick="toggleCollapsible('wizard-crypt-avancado')">
+                        <div class="collapsible-title">⚙ Configurações Avançadas do Crypt</div>
+                        <span class="collapsible-arrow">▼</span>
+                    </div>
+                    <div class="collapsible-body">
+                        <label class="label">Criptografia de nomes de arquivo</label>
+                        <div class="config-field">
+                            <select id="wizard-filename-enc" class="input-field" style="margin-bottom:8px;background:rgba(0,0,0,0.4);">
+                                <option value="standard">Standard — Criptografia forte (recomendado)</option>
+                                <option value="obfuscate">Obfuscate — Ofuscação simples</option>
+                                <option value="off">Off — Sem criptografia de nomes</option>
+                            </select>
+                        </div>
+                        <div class="checkbox-row">
+                            <input type="checkbox" id="wizard-dir-enc" checked>
+                            <label class="checkbox-label" for="wizard-dir-enc">
+                                Criptografar nomes de pastas
+                                <span class="sub">Oculta a estrutura de diretórios no provedor remoto.</span>
+                            </label>
+                        </div>
+                        <div class="checkbox-row">
+                            <input type="checkbox" id="wizard-no-data-enc" onchange="toggleAvisoNoData()">
+                            <label class="checkbox-label" for="wizard-no-data-enc">
+                                Desabilitar criptografia de dados
+                                <span class="sub">Apenas criptografa os nomes, não o conteúdo dos arquivos.</span>
+                            </label>
+                        </div>
+                        <div class="aviso-perigo" id="aviso-no-data">
+                            ⚠️ <strong>ATENÇÃO:</strong> Com esta opção, o conteúdo dos seus arquivos ficará legível no provedor remoto. Use somente se você confia na criptografia do lado do servidor.
+                        </div>
+                    </div>
+                </div>
+
+                <button class="btn" id="wizard-btn-criar-crypt" onclick="wizard.criarCrypt()" style="width:100%; margin-top:14px;">Criar Cofre Criptografado</button>
                 <button class="btn secondary" onclick="wizard.voltarPasso2()" style="width:100%; margin-top:8px;">← Voltar</button>
             </div>
 
@@ -827,6 +1069,78 @@
                 <button class="back-btn" onclick="voltar()">⬅️ Voltar ao Navegador</button>
                 <video id="main-player" controls autoplay controlslist="nodownload"></video>
             </div>
+        </div>
+
+        <!-- View 5: Configurações VFS -->
+        <div class="panel wide" id="config-view" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <h1 style="margin: 0;">⚙ Configurações VFS</h1>
+            </div>
+            <p style="margin-bottom: 16px; font-size: 0.9rem;">Configure o cache, chunking e performance do RClone para montagens e streaming.</p>
+
+            <div class="config-grid" id="config-vfs-grid">
+                <div class="config-section-title">Cache</div>
+
+                <div class="config-field">
+                    <label class="label">Modo de cache <span class="config-hint-icon" title="off: sem cache | minimal: mínimo | writes: só escritas | full: leitura e escrita">?</span></label>
+                    <select id="cfg-vfs-cache-mode">
+                        <option value="off">Off — Sem cache</option>
+                        <option value="minimal">Minimal — Cache mínimo</option>
+                        <option value="writes">Writes — Só escritas</option>
+                        <option value="full" selected>Full — Leitura e escrita (recomendado)</option>
+                    </select>
+                </div>
+
+                <div class="config-field">
+                    <label class="label">Tamanho máximo do cache <span class="config-hint-icon" title="Espaço em disco máximo para cache. Ex: 1G, 5G, 10G, 500M">?</span></label>
+                    <input class="input-field" id="cfg-vfs-cache-max-size" value="5G" style="margin-bottom:0;">
+                </div>
+
+                <div class="config-field">
+                    <label class="label">Idade máxima do cache <span class="config-hint-icon" title="Tempo máximo que um arquivo fica no cache antes de ser removido. Ex: 1h, 30m, 24h">?</span></label>
+                    <input class="input-field" id="cfg-vfs-cache-max-age" value="1h" style="margin-bottom:0;">
+                </div>
+
+                <div class="config-field">
+                    <label class="label">Tempo de cache de diretório <span class="config-hint-icon" title="Quanto tempo manter listagem de pastas em memória antes de atualizar do remoto. Ex: 5m, 15m, 1h">?</span></label>
+                    <input class="input-field" id="cfg-dir-cache-time" value="5m" style="margin-bottom:0;">
+                </div>
+
+                <div class="config-section-title">Chunking e Leitura</div>
+
+                <div class="config-field">
+                    <label class="label">Tamanho de chunk de leitura <span class="config-hint-icon" title="Tamanho de cada pedaço lido do remoto por vez. Chunks maiores = menos requests, mais RAM. Ex: 32M, 64M, 128M">?</span></label>
+                    <input class="input-field" id="cfg-vfs-read-chunk-size" value="64M" style="margin-bottom:0;">
+                </div>
+
+                <div class="config-field">
+                    <label class="label">Limite de crescimento do chunk <span class="config-hint-icon" title="O chunk dobra de tamanho a cada leitura sequencial até este limite. Ex: 512M, 1G, 2G, off">?</span></label>
+                    <input class="input-field" id="cfg-vfs-read-chunk-size-limit" value="2G" style="margin-bottom:0;">
+                </div>
+
+                <div class="config-field">
+                    <label class="label">Read-ahead (leitura antecipada) <span class="config-hint-icon" title="Quantidade de dados lidos antecipadamente em disco durante leitura sequencial. Ex: 64M, 128M, 256M">?</span></label>
+                    <input class="input-field" id="cfg-vfs-read-ahead" value="128M" style="margin-bottom:0;">
+                </div>
+
+                <div class="config-field">
+                    <label class="label">Buffer em memória (por arquivo) <span class="config-hint-icon" title="RAM usada como buffer por arquivo aberto. Ex: 16M, 32M, 64M">?</span></label>
+                    <input class="input-field" id="cfg-buffer-size" value="32M" style="margin-bottom:0;">
+                </div>
+
+                <div class="config-section-title">Sincronização</div>
+
+                <div class="config-field" style="grid-column: span 2;">
+                    <label class="label">Intervalo de polling <span class="config-hint-icon" title="Frequência de verificação de alterações no remoto. Ex: 15s, 30s, 1m. Use 0 para desativar.">?</span></label>
+                    <input class="input-field" id="cfg-poll-interval" value="15s" style="margin-bottom:0;">
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <button class="btn" onclick="salvarConfiguracoes()" style="flex:1;">💾 Salvar Configurações</button>
+                <button class="btn secondary" onclick="restaurarConfiguracoesPadrao()" style="flex:0.6;">↻ Restaurar Padrões</button>
+            </div>
+            <button class="btn secondary" onclick="fecharConfiguracoes()" style="width: 100%; margin-top: 8px;">← Voltar aos Drives</button>
         </div>
     </div>
 
@@ -905,7 +1219,7 @@
             abaAtiva = aba;
             document.getElementById('tabs-nav').style.display = 'flex';
             // Esconde todos
-            ['drives-view','local-browser-view','cloud-view','wizard-view','import-view','loading-view'].forEach(
+            ['drives-view','local-browser-view','cloud-view','wizard-view','import-view','loading-view','config-view'].forEach(
                 id => document.getElementById(id).style.display = 'none'
             );
             // Reseta tabs
@@ -1095,6 +1409,10 @@
             document.getElementById('import-senha').value = '';
             document.getElementById('import-senha2').value = '';
             document.getElementById('import-erro').style.display = 'none';
+            document.getElementById('import-filename-enc').value = 'standard';
+            document.getElementById('import-dir-enc').checked = true;
+            // Fecha a seção avançada ao abrir
+            document.getElementById('import-avancado').classList.remove('open');
         }
 
         function fecharImportar() {
@@ -1119,7 +1437,14 @@
             btn.disabled = true;
             btn.innerHTML = '<div class="spinner sm"></div> Importando...';
 
-            const res = await fetchAPI('/api/nuvem/importar-crypt', 'POST', { nome, remoto_base: remoto, senha, senha2 });
+            const res = await fetchAPI('/api/nuvem/importar-crypt', 'POST', {
+                nome,
+                remoto_base: remoto,
+                senha,
+                senha2,
+                filename_encryption: document.getElementById('import-filename-enc').value,
+                directory_name_encryption: document.getElementById('import-dir-enc').checked ? 'true' : 'false',
+            });
 
             btn.disabled = false;
             btn.innerHTML = 'Importar e Verificar';
@@ -1397,7 +1722,7 @@
 
         // ===================== PLAYER =====================
         function reproduzirVideo(url) {
-            ['drives-view','local-browser-view','cloud-view','wizard-view','import-view','loading-view'].forEach(
+            ['drives-view','local-browser-view','cloud-view','wizard-view','import-view','loading-view','config-view'].forEach(
                 id => document.getElementById(id).style.display = 'none'
             );
             document.getElementById('tabs-nav').style.display = 'none';
@@ -1655,6 +1980,12 @@
                 document.getElementById('wizard-crypt-nome').value = '';
                 document.getElementById('wizard-crypt-senha').value = '';
                 document.getElementById('wizard-crypt-senha2').value = '';
+                // Reset opções avançadas do crypt
+                document.getElementById('wizard-filename-enc').value = 'standard';
+                document.getElementById('wizard-dir-enc').checked = true;
+                document.getElementById('wizard-no-data-enc').checked = false;
+                document.getElementById('aviso-no-data').style.display = 'none';
+                document.getElementById('wizard-crypt-avancado').classList.remove('open');
                 const subpastaRow = document.getElementById('wizard-subpasta-row');
                 if (_tipoArmazenamento === 'local') {
                     subpastaRow.style.display = 'none';
@@ -1688,7 +2019,15 @@
                 btn.disabled = true;
                 btn.innerHTML = '<div class="spinner sm"></div> Criando cofre...';
 
-                const res = await fetchAPI('/api/nuvem/criar-crypt', 'POST', { nome, remoto_base: remotoFinal, senha, senha2 });
+                const res = await fetchAPI('/api/nuvem/criar-crypt', 'POST', {
+                    nome,
+                    remoto_base: remotoFinal,
+                    senha,
+                    senha2,
+                    filename_encryption: document.getElementById('wizard-filename-enc').value,
+                    directory_name_encryption: document.getElementById('wizard-dir-enc').checked ? 'true' : 'false',
+                    no_data_encryption: document.getElementById('wizard-no-data-enc').checked ? 'true' : 'false',
+                });
 
                 btn.disabled = false;
                 btn.innerHTML = 'Criar Cofre Criptografado';
@@ -1758,6 +2097,84 @@
 
         function cancelarOAuth() {
             fetchAPI('/api/nuvem/auth-abort', 'POST');
+        }
+
+        // ===================== COLLAPSIBLE =====================
+        function toggleCollapsible(id) {
+            document.getElementById(id).classList.toggle('open');
+        }
+
+        function toggleAvisoNoData() {
+            const chk = document.getElementById('wizard-no-data-enc');
+            document.getElementById('aviso-no-data').style.display = chk.checked ? 'block' : 'none';
+        }
+
+        // ===================== CONFIGURAÇÕES VFS =====================
+        const _mapaConfigIds = {
+            vfs_cache_mode: 'cfg-vfs-cache-mode',
+            vfs_cache_max_size: 'cfg-vfs-cache-max-size',
+            vfs_cache_max_age: 'cfg-vfs-cache-max-age',
+            vfs_read_chunk_size: 'cfg-vfs-read-chunk-size',
+            vfs_read_chunk_size_limit: 'cfg-vfs-read-chunk-size-limit',
+            vfs_read_ahead: 'cfg-vfs-read-ahead',
+            buffer_size: 'cfg-buffer-size',
+            dir_cache_time: 'cfg-dir-cache-time',
+            poll_interval: 'cfg-poll-interval',
+        };
+
+        function _preencherFormConfig(config) {
+            for (const [chave, id] of Object.entries(_mapaConfigIds)) {
+                const el = document.getElementById(id);
+                if (el && config[chave] !== undefined) {
+                    el.value = config[chave];
+                }
+            }
+        }
+
+        function _lerFormConfig() {
+            const config = {};
+            for (const [chave, id] of Object.entries(_mapaConfigIds)) {
+                const el = document.getElementById(id);
+                if (el) config[chave] = el.value.trim();
+            }
+            return config;
+        }
+
+        async function abrirConfiguracoes() {
+            document.getElementById('drives-view').style.display = 'none';
+            document.getElementById('config-view').style.display = 'block';
+            const config = await fetchAPI('/api/nuvem/configuracoes-vfs');
+            if (config) {
+                _preencherFormConfig(config);
+            }
+        }
+
+        function fecharConfiguracoes() {
+            document.getElementById('config-view').style.display = 'none';
+            document.getElementById('drives-view').style.display = 'block';
+        }
+
+        async function salvarConfiguracoes() {
+            const config = _lerFormConfig();
+            const res = await fetchAPI('/api/nuvem/configuracoes-vfs', 'POST', config);
+            if (res && res.success) {
+                // Feedback visual
+                const btn = event.target;
+                const original = btn.innerHTML;
+                btn.innerHTML = '✓ Salvo!';
+                btn.style.background = 'rgba(16,185,129,0.2)';
+                setTimeout(() => { btn.innerHTML = original; btn.style.background = ''; }, 1500);
+            } else {
+                alert('Erro ao salvar configurações.');
+            }
+        }
+
+        async function restaurarConfiguracoesPadrao() {
+            if (!confirm('Restaurar todas as configurações VFS para os valores padrão?')) return;
+            const res = await fetchAPI('/api/nuvem/configuracoes-vfs/restaurar', 'POST');
+            if (res && res.success) {
+                _preencherFormConfig(res.config);
+            }
         }
         // ===================== FIM =====================
     </script>
