@@ -2,6 +2,75 @@
 
 Todas as modificações notáveis neste projeto serão documentadas neste arquivo.
 
+## [2.0.0] - 2026-06-05
+
+### Refatoração Total — RuntimeCrypto v2 (System Tray + RClone Crypt Nativo)
+
+Reescrita completa do programa, abandonando o modelo web-based (FastAPI + PyWebView) e o motor de criptografia
+customizado (ChaCha20 + `.qnt`) em favor de uma arquitetura nativa Windows com **RClone Crypt como única
+camada de criptografia ponta-a-ponta**.
+
+### Removido
+- **Motor ChaCha20 customizado:** `core/crypto_worker.py` — engine de criptografia por blocos com `ProcessPoolExecutor`.
+- **Ferramenta CLI:** `encrypt_tool.py` — criptografia standalone para formato `.qnt`.
+- **Servidor web:** `runtime_server.py` — FastAPI + Uvicorn com endpoints REST.
+- **Desktop wrapper:** `desktop_player.py` — PyWebView + servidor embutido em thread.
+- **Frontend web:** `ui/index.html` — SPA com 2183 linhas de HTML/CSS/JS.
+- **Formato proprietário `.qnt`:** cabeçalho criptografado de 1024 bytes + blocos ChaCha20 de 1MB.
+- **Cofre local (`cofre.bin`):** chave mestra protegida por PBKDF2 + ChaCha20 (64 bytes).
+- **Histórico criptografado (`historico.bin`):** JSON com padding 4096 bytes.
+- Dependências removidas: `cryptography`, `fastapi`, `uvicorn`, `aiofiles`, `pywebview`.
+
+### Adicionado — System Tray App (`runtime_crypto.py`)
+- **Ícone na bandeja do Windows:** Aplicativo residente com menu de contexto, sem janela principal.
+- **Diálogos nativos (tkinter):** Janelas modais com tema escuro (#0d1b2a + #10b981) para senha, mensagens e configurações.
+- **Menu de cofres dinâmico:** Lista cofres trancados e destrancados com estado em tempo real.
+- **Ícone do tray gerado programaticamente (Pillow):** Cadeado verde sobre fundo transparente.
+- **Wizard de criação de cofre (3 passos):**
+  1. Seleção de provedor (Google Drive, OneDrive, Dropbox)
+  2. Definição de senha e nome do cofre
+  3. Criação automática: OAuth → remoto base → rclone crypt
+- **Fluxo Cryptomator-style:**
+  - Cofre trancado → clique → diálogo de senha → monta unidade virtual → abre Explorer.
+  - Cofre destrancado → clique → desmonta (tranca) imediatamente.
+- **Auto-iniciar com Windows:** Registro em `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`.
+- **Painel de configurações VFS:** 9 parâmetros editáveis com restauração de padrões.
+- **Verificação de WinFsp:** Diagnóstico com 3 métodos (System32 DLL, Registro, Program Files).
+
+### Adicionado — Gerenciamento de Cofres (`core/rclone_manager.py`)
+- **`vaults.json`:** Arquivo de metadados persistente (nome, provedor, remoto base, data de criação, flag auto-montar).
+- **Cache de senhas em RAM:** Armazenamento volátil por cofre, limpo ao trancar ou sair.
+- **`_carregar_cofres()` / `_salvar_cofres()`:** Persistência automática do estado dos cofres.
+- **`adicionar_cofre()`, `remover_cofre()`, `atualizar_cofre()`, `obter_cofre()`:** CRUD completo de cofres.
+- **`armazenar_senha()`, `obter_senha()`, `limpar_senha()`, `limpar_todas_senhas()`:** Gestão de senhas com lock thread-safe.
+- **`obter_letra_por_remoto()`:** Mapeamento remoto → letra de unidade.
+- **Suporte a `RCLONE_CONFIG_PASS`:** Senha injetada via variável de ambiente no processo de mount.
+
+### Modificado — Pipeline de Criptografia
+```
+Antes:  Arquivo → ChaCha20 (.qnt) → Streaming HTTP → Player Web
+Depois: Arquivo → RClone Crypt → WinFsp Mount → Unidade Windows (X:\)
+```
+- **Criptografia delegada ao rclone crypt:** `filename_encryption: standard`, `directory_name_encryption: true`.
+- **Descriptografia transparente via kernel:** WinFsp expõe o crypt remote como unidade nativa do Windows.
+- **Qualquer aplicativo pode ler/escrever:** Explorer, VLC, editores de texto — sem limitação a streaming HTTP.
+
+### Arquitetura Final
+```
+RuntimeCrypto/
+├── runtime_crypto.py          # System tray app (entry point)
+├── core/
+│   └── rclone_manager.py      # RClone + vaults + mount/lock
+├── vaults.json                 # Metadados dos cofres
+├── rclone.exe                  # Binário RClone (72 MB)
+├── requirements.txt            # pystray + Pillow
+├── CHANGELOG.md
+├── LICENSE
+└── .gitignore
+```
+
+---
+
 ## [Não Lançado] - 2026-05-24
 
 ### Adicionado — Configurações Avançadas de VFS (Cache/Chunking/Performance)

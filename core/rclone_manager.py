@@ -43,7 +43,7 @@ PROVEDORES = [
         "campos": [
             {"id": "access_key_id", "label": "Access Key ID", "tipo": "text", "required": True},
             {"id": "secret_access_key", "label": "Secret Access Key", "tipo": "password", "required": True},
-            {"id": "region", "label": "Região (ex: us-east-1)", "tipo": "text", "required": False},
+            {"id": "region", "label": "Regiao (ex: us-east-1)", "tipo": "text", "required": False},
             {"id": "endpoint", "label": "Endpoint customizado (MinIO, etc)", "tipo": "text", "required": False},
         ]
     },
@@ -56,31 +56,38 @@ PROVEDORES = [
     },
 ]
 
-# Ordem preferida de letras de unidade para montagem
 _LETRAS_PREFERIDAS = list("VWXYZRQPONMLKJIHGFEDCBA")
+
+_DIRETORIO_APP = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+ARQUIVO_COFRES = os.path.join(_DIRETORIO_APP, "vaults.json")
 
 
 class GerenciadorRClone:
     def __init__(self):
-        self.processo_servico = None
+        self.process_servico = None
         self.porta_servico = 8081
         self.executavel = self._localizar_rclone()
         self._oauth_processo = None
         self._oauth_token = None
         self._oauth_url = None
         self._oauth_lock = threading.Lock()
-        # Montagem de unidade virtual
-        self._montagens = {}  # {letra: {"processo": Popen, "remoto": str}}
+        self._montagens = {}
         self._montagem_lock = threading.Lock()
-        # Configurações VFS ativas (sobrecarregáveis via API)
         self._config_vfs = dict(CONFIGURACOES_VFS_PADRAO)
+        self._senhas_cache = {}
+        self._cache_lock = threading.Lock()
+        self._chamada_status = None
+        self._carregar_cofres()
+
+    # ==================== LOCALIZACAO / INSTALACAO ====================
 
     def _localizar_rclone(self):
-        for caminho in ["rclone.exe", "rclone", "./rclone.exe"]:
+        caminho_local = os.path.join(_DIRETORIO_APP, "rclone.exe")
+        for caminho in [caminho_local, "rclone.exe", "rclone"]:
             try:
                 subprocess.run([caminho, "--version"], capture_output=True, timeout=5)
                 return caminho
-            except:
+            except Exception:
                 continue
         return None
 
@@ -92,7 +99,7 @@ class GerenciadorRClone:
         import zipfile
         import io
         if os.name != 'nt':
-            return False, "Instalação automática disponível apenas para Windows."
+            return False, "Instalacao automatica disponivel apenas para Windows."
         url = "https://downloads.rclone.org/rclone-current-windows-amd64.zip"
         try:
             req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
@@ -104,24 +111,21 @@ class GerenciadorRClone:
                                 f.write(z.read(info.filename))
                             self.executavel = "./rclone.exe"
                             return True, "RClone instalado com sucesso."
-            return False, "Executável não encontrado no arquivo baixado."
+            return False, "Executavel nao encontrado no arquivo baixado."
         except Exception as e:
             return False, str(e)
 
-    # ==================== VERIFICAÇÃO WINFSP ====================
+    # ==================== WINFSP ====================
 
     def verificar_winfsp(self):
-        """Verifica se o WinFsp está instalado no sistema (necessário para rclone mount)."""
         if os.name != 'nt':
-            return {"instalado": False, "motivo": "Apenas Windows é suportado."}
+            return {"instalado": False, "motivo": "Apenas Windows e suportado."}
 
-        # Método 1: Verificar DLL no System32
         system32 = os.path.join(os.environ.get("SystemRoot", r"C:\Windows"), "System32")
         dll_caminho = os.path.join(system32, "winfsp-x64.dll")
         if os.path.exists(dll_caminho):
             return {"instalado": True}
 
-        # Método 2: Verificar no registro do Windows
         try:
             import winreg
             chave = winreg.OpenKey(
@@ -135,7 +139,6 @@ class GerenciadorRClone:
         except (FileNotFoundError, OSError):
             pass
 
-        # Método 3: Verificar no Program Files
         for base in [os.environ.get("ProgramFiles", ""), os.environ.get("ProgramFiles(x86)", "")]:
             if base:
                 winfsp_dir = os.path.join(base, "WinFsp")
@@ -145,34 +148,30 @@ class GerenciadorRClone:
         return {
             "instalado": False,
             "url_download": "https://winfsp.dev/rel/",
-            "motivo": "WinFsp não encontrado. Necessário para montar unidades virtuais."
+            "motivo": "WinFsp nao encontrado. Necessario para montar unidades virtuais."
         }
 
-    # ==================== GESTÃO DE LETRAS ====================
+    # ==================== LETRAS DE UNIDADE ====================
 
     def obter_letras_disponiveis(self):
-        """Retorna lista de letras de unidade disponíveis no Windows, ordenadas por preferência."""
         if os.name != 'nt':
             return []
         ocupadas = set()
         for letra in string.ascii_uppercase:
             if os.path.exists(f"{letra}:\\"):
                 ocupadas.add(letra)
-        # Também exclui letras já reservadas por montagens ativas
         with self._montagem_lock:
             for letra_montada in self._montagens:
                 ocupadas.add(letra_montada)
         disponiveis = [l for l in _LETRAS_PREFERIDAS if l not in ocupadas]
         return disponiveis
 
-    # ==================== CONFIGURAÇÕES VFS ====================
+    # ==================== CONFIGURACOES VFS ====================
 
     def obter_configuracoes_vfs(self):
-        """Retorna as configurações VFS ativas."""
         return dict(self._config_vfs)
 
     def atualizar_configuracoes_vfs(self, config):
-        """Atualiza as configurações VFS para montagens/serviços futuros."""
         chaves_validas = set(CONFIGURACOES_VFS_PADRAO.keys())
         for chave, valor in config.items():
             if chave in chaves_validas and valor:
@@ -180,12 +179,10 @@ class GerenciadorRClone:
         return self._config_vfs
 
     def restaurar_configuracoes_vfs(self):
-        """Restaura as configurações VFS para os valores padrão."""
         self._config_vfs = dict(CONFIGURACOES_VFS_PADRAO)
         return self._config_vfs
 
     def _construir_args_vfs(self, config_override=None):
-        """Constrói a lista de argumentos de linha de comando VFS."""
         cfg = dict(self._config_vfs)
         if config_override:
             cfg.update({k: v for k, v in config_override.items() if v})
@@ -208,32 +205,28 @@ class GerenciadorRClone:
                 args.extend([flag, valor])
         return args
 
-    # ==================== MONTAGEM DE UNIDADE ====================
+    # ==================== MONTAGEM / DESMONTAGEM ====================
 
-    def montar_unidade(self, remoto, letra=None, config_vfs=None):
-        """Monta um remoto RClone como unidade virtual no Windows."""
+    def montar_unidade(self, remoto, letra=None, senha=None, config_vfs=None):
         if not self.esta_disponivel():
-            return False, "RClone não disponível.", None
+            return False, "RClone nao disponivel.", None
 
         winfsp = self.verificar_winfsp()
         if not winfsp.get("instalado"):
             return False, winfsp.get("motivo", "WinFsp ausente."), None
 
-        # Escolhe letra automaticamente se não fornecida
         if not letra:
             disponiveis = self.obter_letras_disponiveis()
             if not disponiveis:
-                return False, "Nenhuma letra de unidade disponível.", None
+                return False, "Nenhuma letra de unidade disponivel.", None
             letra = disponiveis[0]
 
         letra = letra.upper().strip().rstrip(":\\")
 
-        # Verifica se já está montada
         with self._montagem_lock:
             if letra in self._montagens:
-                return False, f"A letra {letra}: já está em uso.", None
+                return False, f"A letra {letra}: ja esta em uso.", None
 
-        # Garante formato do remoto
         if not remoto.endswith(":"):
             remoto = remoto + ":"
 
@@ -241,33 +234,45 @@ class GerenciadorRClone:
         comando = [
             self.executavel, "mount", remoto, ponto_montagem,
         ] + self._construir_args_vfs(config_vfs) + [
-            "--volname", f"RClone ({remoto.rstrip(':')})",
+            "--volname", f"RuntimeCrypto ({remoto.rstrip(':')})",
             "--network-mode",
         ]
+
+        env = os.environ.copy()
+        if senha:
+            env["RCLONE_CONFIG_PASS"] = senha
 
         try:
             processo = subprocess.Popen(
                 comando,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
+                env=env,
                 creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0,
             )
 
-            # Aguarda a montagem ficar pronta (até 10 segundos)
+            if senha and "RCLONE_CONFIG_PASS" in env:
+                env["RCLONE_CONFIG_PASS"] = "x" * len(senha)
+                del env["RCLONE_CONFIG_PASS"]
+            del env
+
             montou = False
             for _ in range(20):
                 time.sleep(0.5)
                 if os.path.exists(f"{letra}:\\"):
                     montou = True
                     break
-                # Verifica se o processo morreu
                 if processo.poll() is not None:
                     erro = processo.stderr.read().decode('utf-8', errors='replace').strip()
                     return False, f"Falha ao montar: {erro or 'Processo encerrou inesperadamente.'}", None
 
             if not montou:
                 processo.terminate()
-                return False, "Timeout: A unidade não ficou pronta em 10 segundos.", None
+                try:
+                    processo.wait(timeout=5)
+                except Exception:
+                    processo.kill()
+                return False, "Timeout: A unidade nao ficou pronta em 10 segundos.", None
 
             with self._montagem_lock:
                 self._montagens[letra] = {
@@ -282,7 +287,6 @@ class GerenciadorRClone:
             return False, str(e), None
 
     def desmontar_unidade(self, letra):
-        """Desmonta uma unidade virtual previamente montada."""
         letra = letra.upper().strip().rstrip(":\\")
 
         with self._montagem_lock:
@@ -295,10 +299,10 @@ class GerenciadorRClone:
         try:
             processo.terminate()
             processo.wait(timeout=5)
-        except:
+        except Exception:
             try:
                 processo.kill()
-            except:
+            except Exception:
                 pass
 
         with self._montagem_lock:
@@ -307,14 +311,12 @@ class GerenciadorRClone:
         return True, f"Unidade {letra}: desmontada com sucesso."
 
     def desmontar_todas(self):
-        """Desmonta todas as unidades montadas. Usado no shutdown."""
         with self._montagem_lock:
             letras = list(self._montagens.keys())
         for letra in letras:
             self.desmontar_unidade(letra)
 
     def status_montagem(self):
-        """Retorna status de todas as montagens ativas."""
         with self._montagem_lock:
             resultado = []
             letras_remover = []
@@ -330,10 +332,16 @@ class GerenciadorRClone:
                     "ativo": True,
                     "ponto_montagem": f"{letra}:\\"
                 })
-            # Limpa montagens que caíram
             for l in letras_remover:
                 self._montagens.pop(l, None)
         return resultado
+
+    def obter_letra_por_remoto(self, nome_remoto):
+        nome_remoto = nome_remoto.rstrip(":")
+        for m in self.status_montagem():
+            if m["remoto"].rstrip(":") == nome_remoto:
+                return m["letra"]
+        return None
 
     # ==================== REMOTOS ====================
 
@@ -353,7 +361,7 @@ class GerenciadorRClone:
                 capture_output=True, text=True, timeout=10
             )
             return [r.strip() for r in resultado.stdout.split('\n') if r.strip()]
-        except:
+        except Exception:
             return []
 
     def listar_todos_remotos(self):
@@ -365,11 +373,10 @@ class GerenciadorRClone:
                 capture_output=True, text=True, encoding='utf-8', timeout=10
             )
             return [r.strip() for r in resultado.stdout.split('\n') if r.strip()]
-        except:
+        except Exception:
             return []
 
     def listar_remotos_detalhado(self):
-        """Retorna todos os remotos com detalhes de configuração (tipo, remote base, etc)."""
         if not self.esta_disponivel():
             return []
         try:
@@ -381,7 +388,6 @@ class GerenciadorRClone:
                 return []
             config = _json.loads(resultado.stdout)
             lista = []
-            # Monta status de montagem para enriquecer
             montagens_ativas = {m["remoto"].rstrip(":"): m for m in self.status_montagem()}
 
             for nome, cfg in config.items():
@@ -397,11 +403,10 @@ class GerenciadorRClone:
                     "letra_montada": montagem["letra"] if montagem else None,
                 })
             return lista
-        except:
+        except Exception:
             return []
 
     def obter_config_remoto(self, nome):
-        """Retorna a configuração completa de um remoto específico."""
         if not self.esta_disponivel():
             return None
         try:
@@ -413,15 +418,63 @@ class GerenciadorRClone:
                 config = _json.loads(resultado.stdout)
                 return config.get(nome.rstrip(":"))
             return None
-        except:
+        except Exception:
             return None
 
-    # ==================== IMPORTAR CRYPT EXISTENTE ====================
+    # ==================== CRYPT / REMOTO ====================
+
+    def obscurecer_senha(self, senha):
+        resultado = subprocess.run(
+            [self.executavel, "obscure", "-"],
+            input=senha,
+            capture_output=True, text=True, encoding='utf-8', timeout=10,
+            creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0,
+        )
+        return resultado.stdout.strip()
+
+    def criar_remoto(self, nome, tipo, params: dict):
+        if not self.esta_disponivel():
+            return False, "RClone nao disponivel."
+        comando = [self.executavel, "config", "create", nome, tipo]
+        for chave, valor in params.items():
+            if valor:
+                comando.extend([chave, str(valor)])
+        try:
+            resultado = subprocess.run(
+                comando, capture_output=True, text=True, encoding='utf-8', timeout=30
+            )
+            if resultado.returncode == 0:
+                return True, f"Remoto '{nome}' criado com sucesso."
+            return False, resultado.stderr.strip() or "Erro desconhecido."
+        except Exception as e:
+            return False, str(e)
+
+    def criar_crypt(self, nome_crypt, remoto_base, senha, senha2="", config_crypt=None):
+        if not self.esta_disponivel():
+            return False, "RClone nao disponivel."
+        try:
+            cfg = dict(CONFIGURACOES_CRYPT_PADRAO)
+            if config_crypt:
+                cfg.update({k: v for k, v in config_crypt.items() if v})
+
+            senha_obs = self.obscurecer_senha(senha)
+            senha2_obs = self.obscurecer_senha(senha2) if senha2 else senha_obs
+            params = {
+                "remote": remoto_base,
+                "password": senha_obs,
+                "password2": senha2_obs,
+                "filename_encryption": cfg["filename_encryption"],
+                "directory_name_encryption": cfg["directory_name_encryption"],
+            }
+            if cfg.get("no_data_encryption") == "true":
+                params["no_data_encryption"] = "true"
+            return self.criar_remoto(nome_crypt, "crypt", params)
+        except Exception as e:
+            return False, str(e)
 
     def importar_crypt(self, nome, remoto_base, senha, senha2="", config_crypt=None):
-        """Importa/configura um crypt existente (quando já existe no drive, mas não no rclone local)."""
         if not self.esta_disponivel():
-            return False, "RClone não disponível."
+            return False, "RClone nao disponivel."
         try:
             cfg = dict(CONFIGURACOES_CRYPT_PADRAO)
             if config_crypt:
@@ -442,59 +495,9 @@ class GerenciadorRClone:
         except Exception as e:
             return False, str(e)
 
-    # ==================== CRYPT / REMOTO ====================
-
-    def obscurecer_senha(self, senha):
-        resultado = subprocess.run(
-            [self.executavel, "obscure", senha],
-            capture_output=True, text=True, encoding='utf-8', timeout=10
-        )
-        return resultado.stdout.strip()
-
-    def criar_remoto(self, nome, tipo, params: dict):
-        if not self.esta_disponivel():
-            return False, "RClone não disponível."
-        comando = [self.executavel, "config", "create", nome, tipo]
-        for chave, valor in params.items():
-            if valor:
-                comando.extend([chave, str(valor)])
-        try:
-            resultado = subprocess.run(
-                comando, capture_output=True, text=True, encoding='utf-8', timeout=30
-            )
-            if resultado.returncode == 0:
-                return True, f"Remoto '{nome}' criado com sucesso."
-            return False, resultado.stderr.strip() or "Erro desconhecido."
-        except Exception as e:
-            return False, str(e)
-
-    def criar_crypt(self, nome_crypt, remoto_base_ou_caminho, senha, senha2="", config_crypt=None):
-        if not self.esta_disponivel():
-            return False, "RClone não disponível."
-        try:
-            cfg = dict(CONFIGURACOES_CRYPT_PADRAO)
-            if config_crypt:
-                cfg.update({k: v for k, v in config_crypt.items() if v})
-
-            senha_obs = self.obscurecer_senha(senha)
-            senha2_obs = self.obscurecer_senha(senha2) if senha2 else senha_obs
-            params = {
-                "remote": remoto_base_ou_caminho,
-                "password": senha_obs,
-                "password2": senha2_obs,
-                "filename_encryption": cfg["filename_encryption"],
-                "directory_name_encryption": cfg["directory_name_encryption"],
-            }
-            if cfg.get("no_data_encryption") == "true":
-                params["no_data_encryption"] = "true"
-            return self.criar_remoto(nome_crypt, "crypt", params)
-        except Exception as e:
-            return False, str(e)
-
     def remover_remoto(self, nome):
-        """Remove um remoto da configuração do RClone."""
         if not self.esta_disponivel():
-            return False, "RClone não disponível."
+            return False, "RClone nao disponivel."
         nome_limpo = nome.rstrip(":")
         try:
             resultado = subprocess.run(
@@ -526,21 +529,18 @@ class GerenciadorRClone:
         return True
 
     def _ler_oauth_output(self):
-        """Thread que lê a saída do processo rclone authorize."""
         buffer_token = []
         capturando_token = False
 
         for linha in self._oauth_processo.stdout:
             linha_strip = linha.strip()
 
-            # Detecta a URL de autorização (pode vir com prefixo de log rclone)
             if "127.0.0.1" in linha_strip or "localhost" in linha_strip:
                 match = re.search(r'https?://\S+', linha_strip)
                 if match:
                     with self._oauth_lock:
                         self._oauth_url = match.group(0).rstrip('.')
 
-            # Detecta início do bloco de token
             if "Paste the following" in linha_strip:
                 capturando_token = True
                 buffer_token = []
@@ -548,9 +548,7 @@ class GerenciadorRClone:
 
             if capturando_token:
                 if linha_strip == "<---End paste" or "End paste" in linha_strip:
-                    # Monta o JSON completo
                     token_str = "".join(buffer_token).strip()
-                    # Remove possível prefixo de log do rclone (ex: "2024/xx NOTICE: ...")
                     match_json = re.search(r'(\{.*\})', token_str, re.DOTALL)
                     if match_json:
                         with self._oauth_lock:
@@ -574,55 +572,101 @@ class GerenciadorRClone:
             try:
                 self._oauth_processo.terminate()
                 self._oauth_processo.wait(timeout=3)
-            except:
+            except Exception:
                 try:
                     self._oauth_processo.kill()
-                except:
+                except Exception:
                     pass
             self._oauth_processo = None
 
-    # ==================== SERVIDOR HTTP (STREAMING FALLBACK) ====================
+    # ==================== GERENCIAMENTO DE SENHAS (CACHE EM MEMORIA) ====================
 
-    def iniciar_servidor_http(self, remoto, config_vfs=None):
-        if self.processo_servico:
-            self.parar_servidor()
-        comando = [
-            self.executavel, "serve", "http", remoto,
-            "--addr", f"127.0.0.1:{self.porta_servico}",
-            "--read-only",
-        ] + self._construir_args_vfs(config_vfs)
-        self.processo_servico = subprocess.Popen(
-            comando,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0,
-        )
-        time.sleep(2)
-        return f"http://127.0.0.1:{self.porta_servico}/"
+    def armazenar_senha(self, nome_cofre, senha):
+        with self._cache_lock:
+            self._senhas_cache[nome_cofre] = senha
 
-    def parar_servidor(self):
-        if self.processo_servico:
+    def obter_senha(self, nome_cofre):
+        with self._cache_lock:
+            return self._senhas_cache.get(nome_cofre)
+
+    def limpar_senha(self, nome_cofre):
+        with self._cache_lock:
+            self._senhas_cache.pop(nome_cofre, None)
+
+    def limpar_todas_senhas(self):
+        with self._cache_lock:
+            self._senhas_cache.clear()
+
+    # ==================== GERENCIAMENTO DE COFRES (VAULTS) ====================
+
+    def _carregar_cofres(self):
+        if os.path.exists(ARQUIVO_COFRES):
             try:
-                self.processo_servico.terminate()
-                self.processo_servico.wait(timeout=3)
-            except:
-                self.processo_servico.kill()
-            self.processo_servico = None
+                with open(ARQUIVO_COFRES, 'r', encoding='utf-8') as f:
+                    self._cofres = _json.load(f)
+            except Exception:
+                self._cofres = []
+        else:
+            self._cofres = []
 
-    # ==================== LSJSON ====================
+    def _salvar_cofres(self):
+        with open(ARQUIVO_COFRES, 'w', encoding='utf-8') as f:
+            _json.dump(self._cofres, f, indent=2, ensure_ascii=False)
 
-    def listar_arquivos_json(self, remoto, caminho=""):
-        if not self.esta_disponivel():
-            return []
-        alvo = f"{remoto}:{caminho}" if caminho else f"{remoto}:"
-        comando = [self.executavel, "lsjson", alvo]
-        try:
-            resultado = subprocess.run(
-                comando, capture_output=True, text=True, encoding='utf-8', timeout=30
-            )
-            if resultado.returncode == 0:
-                return _json.loads(resultado.stdout)
-            return []
-        except Exception as e:
-            print("Erro ao listar json:", e)
-            return []
+    def listar_cofres(self):
+        montagens = {m["remoto"].rstrip(":"): m for m in self.status_montagem()}
+        resultado = []
+        for cofre in self._cofres:
+            nome = cofre.get("nome", "")
+            m = montagens.get(nome, None)
+            item = dict(cofre)
+            item["montado"] = m is not None
+            item["letra"] = m["letra"] if m else None
+            item["tem_senha"] = self.obter_senha(nome) is not None
+            resultado.append(item)
+        return resultado
+
+    def adicionar_cofre(self, nome, provedor_id, nome_provedor, remoto_base, caminho_cripto=None):
+        for c in self._cofres:
+            if c["nome"] == nome:
+                return False, f"Ja existe um cofre com o nome '{nome}'."
+        cofre = {
+            "nome": nome,
+            "provedor_id": provedor_id,
+            "provedor_nome": nome_provedor,
+            "remoto_base": remoto_base,
+            "caminho_cripto": caminho_cripto or "",
+            "criado_em": time.strftime("%Y-%m-%d %H:%M:%S"),
+            "auto_montar": False,
+        }
+        self._cofres.append(cofre)
+        self._salvar_cofres()
+        return True, f"Cofre '{nome}' adicionado."
+
+    def remover_cofre(self, nome):
+        montagens = {m["remoto"].rstrip(":"): m for m in self.status_montagem()}
+        for c in self._cofres:
+            if c["nome"] == nome:
+                if nome in montagens:
+                    self.desmontar_unidade(montagens[nome]["letra"])
+                self.limpar_senha(nome)
+                self._cofres.remove(c)
+                self._salvar_cofres()
+                return True, f"Cofre '{nome}' removido."
+        return False, f"Cofre '{nome}' nao encontrado."
+
+    def atualizar_cofre(self, nome, **kwargs):
+        for c in self._cofres:
+            if c["nome"] == nome:
+                for k, v in kwargs.items():
+                    if k in c:
+                        c[k] = v
+                self._salvar_cofres()
+                return True
+        return False
+
+    def obter_cofre(self, nome):
+        for c in self._cofres:
+            if c["nome"] == nome:
+                return dict(c)
+        return None
