@@ -8,14 +8,18 @@ import string
 
 CONFIGURACOES_VFS_PADRAO = {
     "vfs_cache_mode": "full",
-    "vfs_cache_max_size": "5G",
+    "vfs_cache_max_size": "10G",
     "vfs_cache_max_age": "1h",
-    "vfs_read_chunk_size": "64M",
-    "vfs_read_chunk_size_limit": "2G",
-    "vfs_read_ahead": "128M",
-    "buffer_size": "32M",
-    "dir_cache_time": "5m",
-    "poll_interval": "15s",
+    "vfs_read_chunk_size": "8M",
+    "vfs_read_chunk_size_limit": "512M",
+    "vfs_read_ahead": "16M",
+    "buffer_size": "16M",
+    "dir_cache_time": "30m",
+    "poll_interval": "30s",
+    "attr_timeout": "1m",
+    "vfs_write_back": "5s",
+    "vfs_disk_space_total_size": "1T",
+    "cache_dir": "",
 }
 
 CONFIGURACOES_CRYPT_PADRAO = {
@@ -197,6 +201,10 @@ class GerenciadorRClone:
             "buffer_size": "--buffer-size",
             "dir_cache_time": "--dir-cache-time",
             "poll_interval": "--poll-interval",
+            "attr_timeout": "--attr-timeout",
+            "vfs_write_back": "--vfs-write-back",
+            "vfs_disk_space_total_size": "--vfs-disk-space-total-size",
+            "cache_dir": "--cache-dir",
         }
         args = []
         for chave, flag in mapa_args.items():
@@ -236,6 +244,9 @@ class GerenciadorRClone:
         ] + self._construir_args_vfs(config_vfs) + [
             "--volname", f"RuntimeCrypto ({remoto.rstrip(':')})",
             "--network-mode",
+            "--no-checksum",
+            "--no-modtime",
+            "--no-console",
         ]
 
         env = os.environ.copy()
@@ -257,17 +268,21 @@ class GerenciadorRClone:
             del env
 
             montou = False
-            for _ in range(120):
-                time.sleep(0.5)
+            inicio = time.time()
+            intervalo = 0.2
+
+            while time.time() - inicio < 45:
+                time.sleep(intervalo)
                 if os.path.exists(f"{letra}:\\"):
                     montou = True
                     break
                 if processo.poll() is not None:
                     erro = processo.stderr.read().decode('utf-8', errors='replace').strip()
                     return False, f"Falha ao montar: {erro or 'Processo encerrou inesperadamente.'}", None
+                if intervalo < 1.0:
+                    intervalo = min(intervalo * 1.5, 1.0)
 
             if not montou:
-                # Capturar stderr antes de matar
                 erro_stderr = ""
                 try:
                     processo.terminate()
@@ -276,7 +291,7 @@ class GerenciadorRClone:
                         erro_stderr = stderr_bytes.decode('utf-8', errors='replace').strip()
                 except Exception:
                     processo.kill()
-                msg_erro = "Timeout: A unidade nao ficou pronta em 60 segundos."
+                msg_erro = "Timeout: A unidade nao ficou pronta em 45 segundos."
                 if erro_stderr:
                     msg_erro += f"\n\nDetalhes: {erro_stderr[:500]}"
                 return False, msg_erro, None
@@ -303,14 +318,18 @@ class GerenciadorRClone:
 
         processo = info["processo"]
 
-        try:
-            processo.terminate()
-            processo.wait(timeout=5)
-        except Exception:
+        for tentativa in range(3):
             try:
-                processo.kill()
+                if tentativa == 0:
+                    processo.terminate()
+                else:
+                    processo.kill()
+                processo.wait(timeout=5)
+                break
+            except subprocess.TimeoutExpired:
+                continue
             except Exception:
-                pass
+                break
 
         with self._montagem_lock:
             self._montagens.pop(letra, None)
