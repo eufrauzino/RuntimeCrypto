@@ -2,6 +2,78 @@
 
 Todas as modificações notáveis neste projeto serão documentadas neste arquivo.
 
+## [2.1.0] - 2026-06-06
+
+### GUI Cryptomator-Style com CustomTkinter
+
+Migração completa da interface de **System Tray puro (tkinter)** para uma aplicação com **janela principal
+moderna** estilo Cryptomator, usando CustomTkinter. O core (`rclone_manager.py`) permaneceu intocado.
+
+### Adicionado — Interface Principal (`gui/`)
+- **`gui/janela_principal.py`:** Janela principal com header, área central scrollable de cards e footer.
+  - Layout responsivo com `grid` — header, centro e footer se ajustam ao redimensionar.
+  - Atualização inteligente: compara estado anterior dos cofres e só reconstroi cards se houve mudança (elimina flicker).
+  - Botão (X) esconde para o tray, duplo clique no tray reabre.
+- **`gui/card_cofre.py`:** Widget `CardCofre` com indicador colorido do provedor, nome, status e botão de ação.
+  - Altura fixa de 76px por card para consistência visual.
+  - Hover effect no card inteiro.
+  - `BotaoNovoCofre` estilizado com borda tracejada.
+- **`gui/dialogos.py`:** Diálogos modais modernos substituindo todos os `tkinter.simpledialog`:
+  - `DialogoSenha` — entrada de senha com ícone de cadeado.
+  - `DialogoMensagem` — info/erro/aviso com ícones e cores semânticas.
+  - `DialogoNovoCofre` — wizard de criação em 2 abas (Provedor → Senha).
+  - `DialogoImportarCofre` — wizard de importação em 2 abas (Provedor → Senhas).
+  - `DialogoSeletorPastaRemota` — navegador visual de pastas remotas com `rclone lsd`.
+  - `DialogoConfigVfs` — painel de 9 parâmetros VFS com restauração de padrões.
+- **`tema_runtime.json`:** Tema CustomTkinter com paleta visual do projeto (`#0d1b2a` + `#10b981`).
+
+### Adicionado — Importação de Cofre Existente
+- **Fluxo completo para importar cofre já existente na nuvem:**
+  1. Seleciona provedor (Google Drive, OneDrive, Dropbox, S3, Local).
+  2. Informa senhas (password + password2/salt) e nome local.
+  3. Para cloud: executa OAuth → abre navegador visual de pastas remotas.
+  4. Para local: abre seletor nativo de pastas do Windows (`askdirectory`).
+  5. Cria remoto crypt apontando para a pasta selecionada.
+- **`DialogoSeletorPastaRemota`:** Navegação hierárquica com duplo clique para entrar em pastas, botão ⬆ para voltar, barra de caminho estilo console.
+- **Carregamento assíncrono:** Listagem de pastas em thread separada com indicador "🔄 Carregando...".
+
+### Adicionado — Métodos em `GerenciadorRClone`
+- **`listar_diretorios_remoto(nome_remoto, caminho="")`:** Lista subdiretórios via `rclone lsd` com timeout de 30s.
+- **`remover_remoto(nome)`:** Remove remoto da configuração via `rclone config delete` (usado ao cancelar importação após auth).
+
+### Corrigido
+- **Timeout de montagem:** Aumentado de **10 segundos → 60 segundos** (`montar_unidade`). Montar crypt remoto no Google Drive com VFS cache full pode levar mais de 10s na primeira vez.
+- **Diagnóstico de timeout:** Captura `stderr` do rclone e inclui na mensagem de erro (até 500 chars).
+
+### Melhorado — Responsividade
+- **Janela principal:** Layout com `grid` em vez de `pack` — se ajusta ao redimensionar.
+- **Todos os diálogos:** Agora são redimensionáveis (`resizable(True, True)`) com `minsize` automático.
+- **Cards:** Altura fixa de 76px, `pack_propagate(False)`, indicadores e botões mais compactos.
+- **Centralização robusta:** `_centralizar_janela` com `try/except` e `minsize` calculado.
+- **Refresh inteligente:** Intervalo 3s, só reconstroi se estado mudou (elimina flicker e CPU desnecessário).
+
+### Dependências
+- **Adicionado:** `customtkinter>=5.2.0` ao `requirements.txt`.
+
+### Arquitetura
+```
+RuntimeCrypto/
+├── runtime_crypto.py          # Entry point: tray + janela CustomTkinter
+├── gui/
+│   ├── __init__.py
+│   ├── janela_principal.py    # Janela principal (CTk)
+│   ├── card_cofre.py          # Widget de card do cofre
+│   └── dialogos.py            # Diálogos modais (senha, mensagem, wizard, etc.)
+├── core/
+│   └── rclone_manager.py      # RClone + vaults + mount (INTOCADO)
+├── tema_runtime.json           # Tema CustomTkinter
+├── vaults.json                 # Metadados dos cofres
+├── requirements.txt            # pystray + Pillow + customtkinter
+└── CHANGELOG.md
+```
+
+---
+
 ## [2.0.0] - 2026-06-05
 
 ### Refatoração Total — RuntimeCrypto v2 (System Tray + RClone Crypt Nativo)

@@ -257,7 +257,7 @@ class GerenciadorRClone:
             del env
 
             montou = False
-            for _ in range(20):
+            for _ in range(120):
                 time.sleep(0.5)
                 if os.path.exists(f"{letra}:\\"):
                     montou = True
@@ -267,12 +267,19 @@ class GerenciadorRClone:
                     return False, f"Falha ao montar: {erro or 'Processo encerrou inesperadamente.'}", None
 
             if not montou:
-                processo.terminate()
+                # Capturar stderr antes de matar
+                erro_stderr = ""
                 try:
-                    processo.wait(timeout=5)
+                    processo.terminate()
+                    _, stderr_bytes = processo.communicate(timeout=5)
+                    if stderr_bytes:
+                        erro_stderr = stderr_bytes.decode('utf-8', errors='replace').strip()
                 except Exception:
                     processo.kill()
-                return False, "Timeout: A unidade nao ficou pronta em 10 segundos.", None
+                msg_erro = "Timeout: A unidade nao ficou pronta em 60 segundos."
+                if erro_stderr:
+                    msg_erro += f"\n\nDetalhes: {erro_stderr[:500]}"
+                return False, msg_erro, None
 
             with self._montagem_lock:
                 self._montagens[letra] = {
@@ -342,8 +349,37 @@ class GerenciadorRClone:
             if m["remoto"].rstrip(":") == nome_remoto:
                 return m["letra"]
         return None
+    # ==================== LISTAGEM DE DIRETORIOS ====================
 
-    # ==================== REMOTOS ====================
+    def listar_diretorios_remoto(self, nome_remoto, caminho=""):
+        """Lista subdiretórios de um remoto usando 'rclone lsd'."""
+        if not self.esta_disponivel():
+            return []
+        if not nome_remoto.endswith(":"):
+            nome_remoto = nome_remoto + ":"
+        alvo = nome_remoto + caminho.lstrip("/") if caminho else nome_remoto
+        try:
+            resultado = subprocess.run(
+                [self.executavel, "lsd", alvo],
+                capture_output=True, text=True, encoding='utf-8', timeout=30,
+                creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0,
+            )
+            dirs = []
+            for linha in resultado.stdout.splitlines():
+                linha = linha.strip()
+                if not linha:
+                    continue
+                # Formato: -1 2024-01-01 00:00:00 -1 nome_pasta
+                partes = linha.split(None, 4)
+                if len(partes) >= 5:
+                    dirs.append(partes[4])
+                elif len(partes) >= 1:
+                    dirs.append(partes[-1])
+            return sorted(dirs)
+        except Exception:
+            return []
+
+
 
     def listar_remotos(self):
         if not self.esta_disponivel():
@@ -431,6 +467,22 @@ class GerenciadorRClone:
             creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0,
         )
         return resultado.stdout.strip()
+
+    def remover_remoto(self, nome):
+        """Remove um remoto da configuração do rclone."""
+        if not self.esta_disponivel():
+            return False, "RClone nao disponivel."
+        try:
+            resultado = subprocess.run(
+                [self.executavel, "config", "delete", nome],
+                capture_output=True, text=True, encoding='utf-8', timeout=15,
+                creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0,
+            )
+            if resultado.returncode == 0:
+                return True, f"Remoto '{nome}' removido."
+            return False, resultado.stderr.strip() or "Erro desconhecido."
+        except Exception as e:
+            return False, str(e)
 
     def criar_remoto(self, nome, tipo, params: dict):
         if not self.esta_disponivel():
