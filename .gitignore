@@ -16,13 +16,19 @@ dist/
 # Large files / Binary assets
 *.mp4
 *.qnt
-*.qt
 *.mov
 *.avi
 *.mkv
+rclone.exe
 
-# Security
+# Dados de runtime (nunca comitar)
+vaults.json
+cofre.ico
+
+# Segurança
 master.key
 cofre.bin
 historico.bin
+
+# Gemini
 GEMINI.md

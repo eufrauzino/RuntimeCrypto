@@ -2,6 +2,147 @@
 
 Todas as modificações notáveis neste projeto serão documentadas neste arquivo.
 
+## [2.1.0] - 2026-06-06
+
+### GUI Cryptomator-Style com CustomTkinter
+
+Migração completa da interface de **System Tray puro (tkinter)** para uma aplicação com **janela principal
+moderna** estilo Cryptomator, usando CustomTkinter. O core (`rclone_manager.py`) permaneceu intocado.
+
+### Adicionado — Interface Principal (`gui/`)
+- **`gui/janela_principal.py`:** Janela principal com header, área central scrollable de cards e footer.
+  - Layout responsivo com `grid` — header, centro e footer se ajustam ao redimensionar.
+  - Atualização inteligente: compara estado anterior dos cofres e só reconstroi cards se houve mudança (elimina flicker).
+  - Botão (X) esconde para o tray, duplo clique no tray reabre.
+- **`gui/card_cofre.py`:** Widget `CardCofre` com indicador colorido do provedor, nome, status e botão de ação.
+  - Altura fixa de 76px por card para consistência visual.
+  - Hover effect no card inteiro.
+  - `BotaoNovoCofre` estilizado com borda tracejada.
+- **`gui/dialogos.py`:** Diálogos modais modernos substituindo todos os `tkinter.simpledialog`:
+  - `DialogoSenha` — entrada de senha com ícone de cadeado.
+  - `DialogoMensagem` — info/erro/aviso com ícones e cores semânticas.
+  - `DialogoNovoCofre` — wizard de criação em 2 abas (Provedor → Senha).
+  - `DialogoImportarCofre` — wizard de importação em 2 abas (Provedor → Senhas).
+  - `DialogoSeletorPastaRemota` — navegador visual de pastas remotas com `rclone lsd`.
+  - `DialogoConfigVfs` — painel de 9 parâmetros VFS com restauração de padrões.
+- **`tema_runtime.json`:** Tema CustomTkinter com paleta visual do projeto (`#0d1b2a` + `#10b981`).
+
+### Adicionado — Importação de Cofre Existente
+- **Fluxo completo para importar cofre já existente na nuvem:**
+  1. Seleciona provedor (Google Drive, OneDrive, Dropbox, S3, Local).
+  2. Informa senhas (password + password2/salt) e nome local.
+  3. Para cloud: executa OAuth → abre navegador visual de pastas remotas.
+  4. Para local: abre seletor nativo de pastas do Windows (`askdirectory`).
+  5. Cria remoto crypt apontando para a pasta selecionada.
+- **`DialogoSeletorPastaRemota`:** Navegação hierárquica com duplo clique para entrar em pastas, botão ⬆ para voltar, barra de caminho estilo console.
+- **Carregamento assíncrono:** Listagem de pastas em thread separada com indicador "🔄 Carregando...".
+
+### Adicionado — Métodos em `GerenciadorRClone`
+- **`listar_diretorios_remoto(nome_remoto, caminho="")`:** Lista subdiretórios via `rclone lsd` com timeout de 30s.
+- **`remover_remoto(nome)`:** Remove remoto da configuração via `rclone config delete` (usado ao cancelar importação após auth).
+
+### Corrigido
+- **Timeout de montagem:** Aumentado de **10 segundos → 60 segundos** (`montar_unidade`). Montar crypt remoto no Google Drive com VFS cache full pode levar mais de 10s na primeira vez.
+- **Diagnóstico de timeout:** Captura `stderr` do rclone e inclui na mensagem de erro (até 500 chars).
+
+### Melhorado — Responsividade
+- **Janela principal:** Layout com `grid` em vez de `pack` — se ajusta ao redimensionar.
+- **Todos os diálogos:** Agora são redimensionáveis (`resizable(True, True)`) com `minsize` automático.
+- **Cards:** Altura fixa de 76px, `pack_propagate(False)`, indicadores e botões mais compactos.
+- **Centralização robusta:** `_centralizar_janela` com `try/except` e `minsize` calculado.
+- **Refresh inteligente:** Intervalo 3s, só reconstroi se estado mudou (elimina flicker e CPU desnecessário).
+
+### Dependências
+- **Adicionado:** `customtkinter>=5.2.0` ao `requirements.txt`.
+
+### Arquitetura
+```
+RuntimeCrypto/
+├── runtime_crypto.py          # Entry point: tray + janela CustomTkinter
+├── gui/
+│   ├── __init__.py
+│   ├── janela_principal.py    # Janela principal (CTk)
+│   ├── card_cofre.py          # Widget de card do cofre
+│   └── dialogos.py            # Diálogos modais (senha, mensagem, wizard, etc.)
+├── core/
+│   └── rclone_manager.py      # RClone + vaults + mount (INTOCADO)
+├── tema_runtime.json           # Tema CustomTkinter
+├── vaults.json                 # Metadados dos cofres
+├── requirements.txt            # pystray + Pillow + customtkinter
+└── CHANGELOG.md
+```
+
+---
+
+## [2.0.0] - 2026-06-05
+
+### Refatoração Total — RuntimeCrypto v2 (System Tray + RClone Crypt Nativo)
+
+Reescrita completa do programa, abandonando o modelo web-based (FastAPI + PyWebView) e o motor de criptografia
+customizado (ChaCha20 + `.qnt`) em favor de uma arquitetura nativa Windows com **RClone Crypt como única
+camada de criptografia ponta-a-ponta**.
+
+### Removido
+- **Motor ChaCha20 customizado:** `core/crypto_worker.py` — engine de criptografia por blocos com `ProcessPoolExecutor`.
+- **Ferramenta CLI:** `encrypt_tool.py` — criptografia standalone para formato `.qnt`.
+- **Servidor web:** `runtime_server.py` — FastAPI + Uvicorn com endpoints REST.
+- **Desktop wrapper:** `desktop_player.py` — PyWebView + servidor embutido em thread.
+- **Frontend web:** `ui/index.html` — SPA com 2183 linhas de HTML/CSS/JS.
+- **Formato proprietário `.qnt`:** cabeçalho criptografado de 1024 bytes + blocos ChaCha20 de 1MB.
+- **Cofre local (`cofre.bin`):** chave mestra protegida por PBKDF2 + ChaCha20 (64 bytes).
+- **Histórico criptografado (`historico.bin`):** JSON com padding 4096 bytes.
+- Dependências removidas: `cryptography`, `fastapi`, `uvicorn`, `aiofiles`, `pywebview`.
+
+### Adicionado — System Tray App (`runtime_crypto.py`)
+- **Ícone na bandeja do Windows:** Aplicativo residente com menu de contexto, sem janela principal.
+- **Diálogos nativos (tkinter):** Janelas modais com tema escuro (#0d1b2a + #10b981) para senha, mensagens e configurações.
+- **Menu de cofres dinâmico:** Lista cofres trancados e destrancados com estado em tempo real.
+- **Ícone do tray gerado programaticamente (Pillow):** Cadeado verde sobre fundo transparente.
+- **Wizard de criação de cofre (3 passos):**
+  1. Seleção de provedor (Google Drive, OneDrive, Dropbox)
+  2. Definição de senha e nome do cofre
+  3. Criação automática: OAuth → remoto base → rclone crypt
+- **Fluxo Cryptomator-style:**
+  - Cofre trancado → clique → diálogo de senha → monta unidade virtual → abre Explorer.
+  - Cofre destrancado → clique → desmonta (tranca) imediatamente.
+- **Auto-iniciar com Windows:** Registro em `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`.
+- **Painel de configurações VFS:** 9 parâmetros editáveis com restauração de padrões.
+- **Verificação de WinFsp:** Diagnóstico com 3 métodos (System32 DLL, Registro, Program Files).
+
+### Adicionado — Gerenciamento de Cofres (`core/rclone_manager.py`)
+- **`vaults.json`:** Arquivo de metadados persistente (nome, provedor, remoto base, data de criação, flag auto-montar).
+- **Cache de senhas em RAM:** Armazenamento volátil por cofre, limpo ao trancar ou sair.
+- **`_carregar_cofres()` / `_salvar_cofres()`:** Persistência automática do estado dos cofres.
+- **`adicionar_cofre()`, `remover_cofre()`, `atualizar_cofre()`, `obter_cofre()`:** CRUD completo de cofres.
+- **`armazenar_senha()`, `obter_senha()`, `limpar_senha()`, `limpar_todas_senhas()`:** Gestão de senhas com lock thread-safe.
+- **`obter_letra_por_remoto()`:** Mapeamento remoto → letra de unidade.
+- **Suporte a `RCLONE_CONFIG_PASS`:** Senha injetada via variável de ambiente no processo de mount.
+
+### Modificado — Pipeline de Criptografia
+```
+Antes:  Arquivo → ChaCha20 (.qnt) → Streaming HTTP → Player Web
+Depois: Arquivo → RClone Crypt → WinFsp Mount → Unidade Windows (X:\)
+```
+- **Criptografia delegada ao rclone crypt:** `filename_encryption: standard`, `directory_name_encryption: true`.
+- **Descriptografia transparente via kernel:** WinFsp expõe o crypt remote como unidade nativa do Windows.
+- **Qualquer aplicativo pode ler/escrever:** Explorer, VLC, editores de texto — sem limitação a streaming HTTP.
+
+### Arquitetura Final
+```
+RuntimeCrypto/
+├── runtime_crypto.py          # System tray app (entry point)
+├── core/
+│   └── rclone_manager.py      # RClone + vaults + mount/lock
+├── vaults.json                 # Metadados dos cofres
+├── rclone.exe                  # Binário RClone (72 MB)
+├── requirements.txt            # pystray + Pillow
+├── CHANGELOG.md
+├── LICENSE
+└── .gitignore
+```
+
+---
+
 ## [Não Lançado] - 2026-05-24
 
 ### Adicionado — Configurações Avançadas de VFS (Cache/Chunking/Performance)
