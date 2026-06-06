@@ -952,6 +952,10 @@ class DialogoConfigVfs(ctk.CTkToplevel):
         "buffer_size": "Tamanho do buffer de memória",
         "dir_cache_time": "Tempo de cache de diretórios",
         "poll_interval": "Intervalo de polling para mudanças",
+        "attr_timeout": "Cache de atributos (evita consultas repetidas)",
+        "vfs_write_back": "Atraso antes de enviar arquivo à nuvem",
+        "vfs_disk_space_total_size": "Tamanho total virtual da unidade",
+        "cache_dir": "Pasta local para cache VFS (SSD recomendado)",
     }
 
     def __init__(self, master, gerenciador):
